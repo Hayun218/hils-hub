@@ -4,8 +4,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type {
   HubState, Student, StudentRecord, PurchaseRequest, Teacher, RoadmapCell, ProgressReport, TimetableBlock,
-  AttendanceEntry, GradeSheet, FormRecord, RoadmapDef, ReportTemplate, GedExam, SyllabusPlan, ArchiveEntry,
+  AttendanceEntry, GradeSheet, FormRecord, RoadmapDef, ReportTemplate, GedExam, SyllabusPlan, ArchiveEntry, Submission, GradCheck, GradSettings, SchoolRecordDoc, DiagnosticExam,
 } from './types';
+import { normalizeRecord } from './schoolRecordModel';
 import { seed } from './seed';
 import { demeritsInQuarter, guidanceCount, quarterOf, stageFor } from './rules';
 import { assignHomerooms } from './homeroom';
@@ -33,7 +34,7 @@ async function initialState(): Promise<{ state: HubState; source: 'roster' | 'de
   const { students, teachers } = await fetchRoster();
   if (students.length) {
     const ts = teachers.length ? teachers : seed.teachers;
-    return { state: { ...seed, students: fillHomerooms(students, ts), teachers: ts, records: [], purchases: [] }, source: 'roster' };
+    return { state: { ...seed, students: fillHomerooms(students, ts), teachers: ts, records: [], purchases: [], diagnostics: [] }, source: 'roster' };
   }
   return { state: seed, source: 'demo' };
 }
@@ -47,6 +48,18 @@ async function mergeRoster(saved: HubState): Promise<HubState> {
   const demoTeachers = ts.every(t => seed.teachers.some(x => x.id === t.id));
   if (teachers.length && demoTeachers) ts = teachers;
   else if (teachers.length) ts = ts.map(t => { const f = teachers.find(x => x.id === t.id); return f ? { ...f, ...t, strengths: t.strengths ?? f.strengths, homeroomFor: t.homeroomFor ?? f.homeroomFor, role: t.role ?? f.role } : t; });
+  // 명단(roster.csv)에서 지운 학생(r번호)은 저장된 기록과 함께 뺀다 (예: 자퇴로 원본에서 삭제)
+  const gone = new Set(saved.students.filter(s => /^r\d+$/.test(s.id) && !byId.has(s.id)).map(s => s.id));
+  if (gone.size) {
+    const keep = <T extends { studentId: string }>(xs: T[]) => xs.filter(x => !gone.has(x.studentId));
+    saved = {
+      ...saved, students: saved.students.filter(s => !gone.has(s.id)), records: keep(saved.records), reports: keep(saved.reports),
+      forms: saved.forms.filter(f => !f.studentId || !gone.has(f.studentId)), gedExams: keep(saved.gedExams), diagnostics: saved.diagnostics.map(d => ({ ...d, students: d.students.filter(id => !gone.has(id)), results: Object.fromEntries(Object.entries(d.results).filter(([sid]) => !gone.has(sid))) })), submissions: keep(saved.submissions), schoolRecords: keep(saved.schoolRecords),
+      attendance: Object.fromEntries(Object.entries(saved.attendance).map(([d, v]) => [d, Object.fromEntries(Object.entries(v).filter(([sid]) => !gone.has(sid)))])),
+      progress: Object.fromEntries(Object.entries(saved.progress).filter(([sid]) => !gone.has(sid))),
+      gradChecks: Object.fromEntries(Object.entries(saved.gradChecks).filter(([sid]) => !gone.has(sid))),
+    };
+  }
   const ss = saved.students.map(s => {
     const f = byId.get(s.id);
     return f ? { ...s, gender: s.gender ?? f.gender, classGroup: s.classGroup ?? f.classGroup } : s;
@@ -87,6 +100,13 @@ interface Hub extends HubState {
   setCalendar: (c: HubState['calendar'], theme?: string) => void;
   saveSyllabus: (p: SyllabusPlan) => void;
   saveArchive: (a: Omit<ArchiveEntry, 'id' | 'savedAt'>) => void;
+  saveSubmission: (x: Submission) => void;
+  saveSchoolRecord: (r: SchoolRecordDoc) => void;
+  saveDiagnostic: (d: DiagnosticExam) => void;
+  removeDiagnostic: (id: string) => void;
+  removeSubmission: (id: string) => void;
+  setGradCheck: (sid: string, key: string, c: GradCheck | null) => void;
+  setGradSettings: (g: GradSettings) => void;
   removeArchive: (id: string) => void;
   removeSyllabus: (id: string) => void;
   removeGed: (id: string) => void;
@@ -98,7 +118,14 @@ const upsert = <T extends { id: string }>(list: T[], item: T) =>
   list.some(x => x.id === item.id) ? list.map(x => (x.id === item.id ? item : x)) : [...list, item];
 
 /** 예전 버전에서 저장한 데이터에 없는 칸을 채운다 */
-const withDefaults = (s: Partial<HubState>): HubState => ({ ...seed, ...s } as HubState);
+const withDefaults = (s: Partial<HubState>): HubState => {
+  const out = { ...seed, ...s } as HubState;
+  if (!out.gradSettings || !('고등' in out.gradSettings)) out.gradSettings = seed.gradSettings; // 예전 한 가지 기준 → 학교급별
+  else for (const t of ['초등', '중등', '고등'] as const) out.gradSettings[t] = { ...seed.gradSettings[t], ...out.gradSettings[t] };
+  out.schoolRecords = (out.schoolRecords || []).map(normalizeRecord); // 예전 글 칸 → 표 행
+  if (!s.diagnostics) out.diagnostics = out.students.some(x => seed.students.some(y => y.id === x.id)) ? seed.diagnostics : []; // 시연 진단평가는 가상 명단일 때만
+  return out;
+};
 
 export function HubProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<HubState>(seed);
@@ -198,6 +225,17 @@ export function HubProvider({ children }: { children: ReactNode }) {
     setReportTemplate: (reportTemplate) => setState(x => ({ ...x, reportTemplate })),
     updateTeacher: (id, patch) => setState(x => ({ ...x, teachers: x.teachers.map(t => (t.id === id ? { ...t, ...patch } : t)) })),
     removeTeacher: (id) => setState(x => ({ ...x, teachers: x.teachers.filter(t => t.id !== id), students: x.students.map(s => (s.homeroom === id ? { ...s, homeroom: '' } : s)) })),
+    saveDiagnostic: (d) => setState(x => ({ ...x, diagnostics: upsert(x.diagnostics, d) })),
+    removeDiagnostic: (id) => setState(x => ({ ...x, diagnostics: x.diagnostics.filter(v => v.id !== id) })),
+    saveSchoolRecord: (r) => setState(x => ({ ...x, schoolRecords: upsert(x.schoolRecords, { ...r, updatedAt: new Date().toISOString() }) })),
+    saveSubmission: (sub) => setState(x => ({ ...x, submissions: upsert(x.submissions, sub) })),
+    removeSubmission: (id) => setState(x => ({ ...x, submissions: x.submissions.filter(v => v.id !== id) })),
+    setGradCheck: (sid, key, c) => setState(x => {
+      const cur = { ...(x.gradChecks[sid] || {}) };
+      if (c) cur[key] = c; else delete cur[key];
+      return { ...x, gradChecks: { ...x.gradChecks, [sid]: cur } };
+    }),
+    setGradSettings: (gradSettings) => setState(x => ({ ...x, gradSettings })),
     saveArchive: (a) => setState(x => ({ ...x, archives: [...x.archives, { ...a, id: uid('ar'), savedAt: new Date().toISOString() }] })),
     removeArchive: (id) => setState(x => ({ ...x, archives: x.archives.filter(a => a.id !== id) })),
     saveSyllabus: (p) => setState(x => ({ ...x, syllabi: upsert(x.syllabi, { ...p, updatedAt: new Date().toISOString() }) })),

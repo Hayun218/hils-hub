@@ -62,7 +62,7 @@ export async function GET() {
     if (!name || !birthYear) return;
     const gender = col(r, '성별');
     students.push({
-      id: `r${String(i + 1).padStart(2, '0')}`,
+      id: col(r, 'id') || `r${String(i + 1).padStart(2, '0')}`, // id 열이 있으면 그 번호 (줄을 지워도 기록 연결 유지)
       name,
       birthYear,
       schoolLevel: col(r, '학년').startsWith('초') ? '초등' : '중고등',

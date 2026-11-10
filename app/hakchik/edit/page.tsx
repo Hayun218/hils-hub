@@ -29,7 +29,7 @@ export default function HakchikEditPage() {
   const [orig, setOrig] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [editable, setEditable] = useState(false);
-  const [logRev, setLogRev] = useState(true);
+  const [logRev, setLogRev] = useState(false); // 완성본 전: 개정 이력을 남기지 않는다
   const [version, setVersion] = useState('');
   const [note, setNote] = useState('');
   const [err, setErr] = useState('');
@@ -95,7 +95,7 @@ export default function HakchikEditPage() {
           </>}
         </div>
         <p className="tiny muted" style={{ margin: '8px 0 0' }}>
-          저장하면 이전 원문을 <code>.hakchik-history/</code>에 백업합니다. 별표 6 결정 기록은 본문에서 직접 고칩니다. {dirty ? '· 저장하지 않은 변경 있음' : ''}
+          저장하면 이전 원문을 <code>.hakchik-history/</code>에 백업합니다. {dirty ? '· 저장하지 않은 변경 있음' : ''}
         </p>
       </div>
       {err && <div className="callout red" style={{ marginBottom: 12 }}>{err}</div>}

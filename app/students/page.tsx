@@ -39,7 +39,7 @@ export default function StudentsPage() {
     <div className="page">
       <PageHead
         title="학생 명단"
-        desc={<>{SCHOOL_YEAR}학년도 · 학년은 출생 연도 기준 참고 표기 (제20조 제3항). 이름을 누르면 학생 상세, 편집을 누르면 성별·담임·학적·비고를 고칩니다.</>}
+        desc={<>{SCHOOL_YEAR}학년도 · 학년은 출생 연도 기준 참고 표기 (제20조 제5항). 이름을 누르면 학생 상세, 편집을 누르면 성별·담임·학적·비고를 고칩니다.</>}
         right={<button className="btn primary" onClick={() => setAdding(true)}>+ 학생 추가</button>}
       />
 
@@ -73,7 +73,7 @@ export default function StudentsPage() {
                   {s.gedThisQuarter && <> <Badge tone="gold">검정고시</Badge></>}
                 </td>
                 <td className="small">{s.classGroup || s.schoolLevel}</td>
-                <td className="small">{gradeLabel(s.birthYear)} <span className="muted">{age(s.birthYear)}세</span></td>
+                <td className="small">{gradeLabel(s.birthYear)}{!gradeLabel(s.birthYear).startsWith('만') && <span className="muted"> {age(s.birthYear)}세</span>}</td>
                 <td className="small">{s.gender || <span className="muted">-</span>}</td>
                 <td className="small">{s.homeroom ? hub.teacherName(s.homeroom) : s.status === '재학' ? <Badge tone="gold">미지정</Badge> : <span className="muted">-</span>}</td>
                 <td>

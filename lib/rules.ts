@@ -11,14 +11,14 @@ export const CLASS_HOURS = {
   pmStart: '13:30', pmEndSecondary: '18:00', pmEndElementary: '15:00', // 0.9.6: 중고등 17:00 → 18:00
 };
 
-/** 출생 연도로 국내 학년 표기 (학부모 안내용 참고, 제20조 제3항) */
+/** 출생 연도로 국내 학년 표기 (학부모 안내용 참고, 제20조 제5항) */
 export function gradeLabel(birthYear: number, year = SCHOOL_YEAR): string {
   const g = year - birthYear - 6;
   if (g < 1) return '취학 전';
   if (g <= 6) return `초${g}`;
   if (g <= 9) return `중${g - 6}`;
   if (g <= 12) return `고${g - 9}`;
-  return `만 ${year - birthYear - 1}세`; // 고3을 지난 나이: 생일 전 기준 만 나이
+  return `만 ${year - birthYear - 1}세`; // 고3을 지난 나이(고등 졸업 연령)는 만 나이 하나만 쓴다 (연 나이를 덧붙이지 않음)
 }
 
 export function age(birthYear: number, year = SCHOOL_YEAR): number {
@@ -79,28 +79,28 @@ export function interviewTitle(kind: '정기' | '학습' | '지도', name: strin
   return `[지도-${opts.step || 1}단계] ${name} · ${opts.reason || '사유'} · ${date}`;
 }
 
-/** 별표 8 상점·벌점 기준 (q1: 1쿼터 적용 항목, 부칙 제4조) */
+/** 별표 8 상점·벌점 기준 */
 export const MERIT_ITEMS = [
-  { area: '영성', label: '3P 바인더를 한 주 동안 빠짐없이 작성', points: 1, q1: true },
-  { area: '영성', label: '말씀 암송 단계 통과', points: 2, q1: false },
-  { area: '사고력·독서', label: '독서 보고서 제출', points: 1, q1: true },
-  { area: '사고력·독서', label: '하브루타·발표에서 뛰어난 참여', points: 2, q1: false },
-  { area: '공동체·섬김', label: '맡지 않은 일을 자발적으로 섬김', points: 2, q1: true },
-  { area: '공동체·섬김', label: '갈등 중재, 어린 학생 돌봄', points: 2, q1: false },
-  { area: '학습', label: '쿼터 학습 목표 달성', points: 2, q1: false },
-  { area: '학습', label: '레벨 상향', points: 3, q1: false },
-  { area: '생활', label: '한 쿼터 동안 지각과 벌점 없음', points: 3, q1: false },
+  { area: '생활', label: '3P 바인더를 한 주 동안 빠짐없이 작성', points: 1 },
+  { area: '영성', label: '말씀 암송 단계 통과', points: 2 },
+  { area: '사고력·독서', label: '독서 보고서 제출', points: 1 },
+  { area: '사고력·독서', label: '하브루타·발표에서 뛰어난 참여', points: 2 },
+  { area: '공동체·섬김', label: '맡지 않은 일을 자발적으로 섬김', points: 2 },
+  { area: '공동체·섬김', label: '갈등 중재, 어린 학생 돌봄', points: 2 },
+  { area: '학습', label: '쿼터 학습 목표 달성', points: 2 },
+  { area: '학습', label: '레벨 상향', points: 3 },
+  { area: '생활', label: '한 쿼터 동안 지각과 벌점 없음', points: 3 },
 ];
 
 /** 별표 8 벌점 기준. action: 즉시 조치 (운영 원칙 ⑥) */
-export const DEMERIT_ITEMS: { area: string; label: string; points: number; q1: boolean; action?: string }[] = [
-  { area: '생활', label: '지각', points: 1, q1: true, action: '당일 저녁 설거지' },
-  { area: '생활', label: '청소·당번 불이행', points: 1, q1: false },
-  { area: '학습', label: '과제·준비물 미이행 (같은 주 2회 이상)', points: 1, q1: false },
-  { area: '학습', label: '교사 지시 불응, 수업 방해', points: 2, q1: false },
-  { area: '언어', label: '제31조 제1항 위반', points: 2, q1: true },
-  { area: '전자기기', label: '제출하지 않은 기기 보유, 돌려받은 기기 미제출', points: 3, q1: true, action: '기기 보관, 보호자 알림' },
-  { area: '공동체', label: '제32조 제2항의 행동', points: 5, q1: true, action: '제33조 지도 면담' },
+export const DEMERIT_ITEMS: { area: string; label: string; points: number; action?: string }[] = [
+  { area: '생활', label: '지각', points: 1, action: '당일 저녁 설거지' },
+  { area: '생활', label: '청소·당번 불이행', points: 1 },
+  { area: '학습', label: '과제·준비물 미이행 (같은 주 2회 이상)', points: 1 },
+  { area: '학습', label: '교사 지시 불응, 수업 방해', points: 2 },
+  { area: '언어', label: '제31조 제1항 위반', points: 2 },
+  { area: '전자기기', label: '제출하지 않은 기기 보유, 돌려받은 기기 미제출', points: 3, action: '기기 보관, 보호자 알림' },
+  { area: '공동체', label: '제32조 제2항의 행동', points: 5, action: '제33조 지도 면담' },
 ];
 
 /** 학생의 여정 단계 (제3장, 제6장) */

@@ -5,10 +5,11 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useHub } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { can } from '@/lib/permissions';
+import type { Permission } from '@/lib/types';
 import { DEMO_TODAY, QUARTER_LABEL, quarterOf } from '@/lib/rules';
 import AuthScreen from './AuthScreen';
 
-interface Leaf { href: string; label: string; badge?: string }
+interface Leaf { href: string; label: string; badge?: string; perm?: Permission }
 interface Group { id: string; label: string; items: (Leaf | Group)[] }
 type Node = Leaf | Group;
 const isGroup = (n: Node): n is Group => 'items' in n;
@@ -21,6 +22,8 @@ const MENU: Node[] = [
       { href: '/records/attendance', label: '출석 현황' },
       { href: '/records/interviews', label: '면담 일지' },
       { href: '/records/life', label: '생활 기록' },
+      { href: '/records/schoolrecord', label: '학교생활기록부' },
+      { href: '/students/graduation', label: '졸업 요건 · 과제' },
     ],
   },
   {
@@ -28,6 +31,7 @@ const MENU: Node[] = [
       { href: '/reports/template', label: '교과 로드맵' },
       { href: '/subjects/plans', label: '과목 운영안' },
       { href: '/admin/timetable', label: '시간표' },
+      { href: '/records/diagnosis', label: '진단평가' },
       { href: '/records/grades', label: '성적 입력' },
       { href: '/reports', label: '학습 진도 보고서' },
     ],
@@ -40,7 +44,9 @@ const MENU: Node[] = [
   },
   {
     id: 'finance', label: '회계', items: [
-      { href: '/admin/accounting', label: '구입 신청 · 결재 · 장부' },
+      { href: '/admin/accounting', label: '구입 신청' },
+      { href: '/admin/accounting/approve', label: '결재 · 구입 처리', perm: 'accounting' },
+      { href: '/admin/accounting/ledger', label: '회계 장부', perm: 'accounting' },
     ],
   },
   {
@@ -86,7 +92,15 @@ export default function Shell({ children }: { children: ReactNode }) {
     ],
   }] : MENU;
 
-  const render = (nodes: Node[], depth: number): ReactNode => nodes.map(n => {
+  // 권한이 없는 메뉴는 숨기고, 항목이 하나뿐인 그룹은 접기 없이 그 항목만 보인다
+  const allowed = (ns: Node[]): Node[] => ns.flatMap((n): Node[] => {
+    if (!isGroup(n)) return !n.perm || can(auth.me, n.perm) ? [n] : [];
+    const items = allowed(n.items);
+    if (!items.length) return [];
+    if (items.length === 1 && !isGroup(items[0])) return [{ ...(items[0] as Leaf), label: n.label }];
+    return [{ ...n, items } as Group];
+  });
+  const render = (nodes: Node[], depth: number): ReactNode => allowed(nodes).map(n => {
     if (!isGroup(n)) {
       return (
         <Link key={n.href} href={n.href} className={`nav-leaf d${depth}${on(n.href) ? ' on' : ''}`}>
@@ -125,7 +139,10 @@ export default function Shell({ children }: { children: ReactNode }) {
           <div className="tiny" style={{ marginTop: 8, opacity: 0.7 }}>시안 · 기록은 이 브라우저에만 저장</div>
         </div>
       </aside>
-      <div className="main">{children}</div>
+      <div className="main">
+        <div className="demo-banner no-print">2027학년도부터 사용할 HILS 학교 운영 시스템 <b>시안</b>입니다. 데이터베이스 연결 전이라 입력한 기록은 이 브라우저에만 저장되고, 학생 이름은 가상입니다.</div>
+        {children}
+      </div>
     </div>
   );
 }

@@ -69,8 +69,7 @@ export function MeritForm({ s, onDone }: { s: Student; onDone: (m: string) => vo
   const hub = useHub();
   const b = useBase(s);
   const [kind, setKind] = useState<'merit' | 'demerit'>('merit');
-  const [q1Only, setQ1Only] = useState(true);
-  const items = (kind === 'merit' ? MERIT_ITEMS : DEMERIT_ITEMS).filter(i => !q1Only || i.q1);
+  const items = (kind === 'merit' ? MERIT_ITEMS : DEMERIT_ITEMS);
   const [idx, setIdx] = useState(0);
   const item = items[Math.min(idx, items.length - 1)];
   const [points, setPoints] = useState<number | null>(null);
@@ -99,7 +98,6 @@ export function MeritForm({ s, onDone }: { s: Student; onDone: (m: string) => vo
           <button className={kind === 'merit' ? 'on' : ''} onClick={() => { setKind('merit'); setIdx(0); setPoints(null); }}>상점</button>
           <button className={kind === 'demerit' ? 'on' : ''} onClick={() => { setKind('demerit'); setIdx(0); setPoints(null); }}>벌점</button>
         </div>
-        <label className="check small"><input type="checkbox" checked={q1Only} onChange={e => { setQ1Only(e.target.checked); setIdx(0); }} /> 1쿼터 적용 항목만 (부칙 제4조)</label>
       </div>
       <label className="field">기준 (별표 8)
         <select value={idx} onChange={e => { setIdx(Number(e.target.value)); setPoints(null); }}>

@@ -20,12 +20,12 @@ interface Body {
   revision?: { version: string; date: string; note: string; author: string };
 }
 
-/** 개정 이력 표의 마지막 행 뒤에 한 행을 넣는다 (제5조 제4항) */
+/** 개정 이력 표의 마지막 행 뒤에 한 행을 넣는다 (제5조 제4항). 완성본 전이라 표를 지운 동안에는 그대로 둔다 */
 function appendRevision(md: string, r: NonNullable<Body['revision']>): string {
   const lines = md.split('\n');
   let last = -1;
   lines.forEach((l, i) => { if (REV_ROW.test(l)) last = i; });
-  if (last < 0) throw new Error('개정 이력 표를 찾지 못했습니다');
+  if (last < 0) return md;
   const cell = (s: string) => s.replace(/\|/g, '/').replace(/\n/g, ' ').trim();
   lines.splice(last + 1, 0, `| ${cell(r.version)} | ${cell(r.date)} | ${cell(r.note)} | ${cell(r.author)} |`);
   return lines.join('\n');

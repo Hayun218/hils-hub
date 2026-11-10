@@ -43,7 +43,7 @@ export default function StudentPage() {
     <div className="page">
       <PageHead
         title={s.name}
-        desc={<>{gradeLabel(s.birthYear)} · {age(s.birthYear)}세 · {s.schoolLevel} · {s.boarding ? '기숙' : '통학'} · 담임 {hub.teacherName(s.homeroom)}</>}
+        desc={<>{gradeLabel(s.birthYear)}{gradeLabel(s.birthYear).startsWith('만') ? '' : ` · ${age(s.birthYear)}세`} · {s.schoolLevel} · {s.boarding ? '기숙' : '통학'} · 담임 {hub.teacherName(s.homeroom)}</>}
         right={<>
           <StatusBadge s={s.status} />
           {s.status === '문의' && <button className="btn" onClick={() => hub.updateStudent(s.id, { status: '체험입학' })}>체험 입학 시작</button>}

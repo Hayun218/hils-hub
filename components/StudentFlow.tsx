@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useHub } from '@/lib/store';
 import { DEMO_TODAY, journeyIndex, JOURNEY, quarterOf } from '@/lib/rules';
 import { periodOf } from '@/lib/reports';
-import { studentArchive } from '@/lib/archive';
+import { studentArchive, type ArchiveMode } from '@/lib/archive';
 import { downloadBlob } from '@/lib/formDocx';
 import type { FormRecord, Student } from '@/lib/types';
 import { Badge, ArtLink } from './ui';
@@ -84,9 +84,9 @@ export default function StudentTop({ s }: { s: Student }) {
   const ji = journeyIndex(s);
   const leaving = s.status !== '재학' && s.status !== '체험입학' && s.status !== '문의';
 
-  const zip = async () => {
+  const zip = async (mode: ArchiveMode) => {
     setBusy(true);
-    try { downloadBlob(await studentArchive(s, hub), `${s.name}_학생기록_${DEMO_TODAY}.zip`); } finally { setBusy(false); }
+    try { downloadBlob(await studentArchive(s, hub, mode), `${s.name}_학생기록${mode === '전달' ? '_전달용' : ''}_${DEMO_TODAY}.zip`); } finally { setBusy(false); }
   };
 
   return (
@@ -128,9 +128,12 @@ export default function StudentTop({ s }: { s: Student }) {
           <div className="spread">
             <div>
               <b>기록 보관</b> <span className="tiny muted">{s.status}{s.leaveType ? ` · ${s.leaveType}` : ''} {s.statusDate || ''}</span>
-              <p className="small muted" style={{ margin: '4px 0 0' }}>학생 정보·기록·출결·성적·검정고시·서식(Word)·진도 보고서를 한 파일로 내려받아 드라이브에 올리고, 링크를 남깁니다. 비공개 기록은 따로 폴더에 담깁니다 (제38조).</p>
+              <p className="small muted" style={{ margin: '4px 0 0' }}>학교 보관용은 모든 기록을 담고, 면담 일지·지도 사유는 &lsquo;면담·지도기록_비공개&rsquo; 폴더에 따로 둡니다. 교직원 전용 드라이브에 올리고 링크를 남깁니다. 졸업생·학부모에게는 면담·지도 기록을 뺀 전달용을 보냅니다 (제38조 제2항).</p>
             </div>
-            <button className="btn primary" onClick={zip} disabled={busy}>{busy ? '만드는 중…' : '기록 전체 ZIP 내려받기'}</button>
+            <div className="row" style={{ gap: 6 }}>
+              <button className="btn primary" onClick={() => zip('보관')} disabled={busy}>{busy ? '만드는 중…' : '학교 보관용 ZIP'}</button>
+              <button className="btn" onClick={() => zip('전달')} disabled={busy} title="면담·지도 기록과 원자료를 뺀 묶음">졸업생 전달용 ZIP</button>
+            </div>
           </div>
           <label className="field" style={{ marginTop: 10 }}>드라이브 링크
             <input value={s.archiveUrl || ''} placeholder="https://drive.google.com/…" onChange={e => hub.updateStudent(s.id, { archiveUrl: e.target.value || undefined, archivedAt: e.target.value ? (s.archivedAt || DEMO_TODAY) : undefined })} />

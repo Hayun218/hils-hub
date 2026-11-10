@@ -5,15 +5,14 @@ import { useHub } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { DEMO_TODAY, DEMERIT_ITEMS, MERIT_ITEMS } from '@/lib/rules';
 
-type Item = { area: string; label: string; points: number; q1: boolean; action?: string };
+type Item = { area: string; label: string; points: number; action?: string };
 
 export default function QuickMerit({ onSaved }: { onSaved: (m: string) => void }) {
   const hub = useHub();
   const auth = useAuth();
   const [sid, setSid] = useState('');
   const [kind, setKind] = useState<'merit' | 'demerit'>('merit');
-  const [q1Only, setQ1Only] = useState(true);
-  const items: Item[] = (kind === 'merit' ? MERIT_ITEMS : DEMERIT_ITEMS).filter(i => !q1Only || i.q1);
+  const items: Item[] = (kind === 'merit' ? MERIT_ITEMS : DEMERIT_ITEMS);
   const [idx, setIdx] = useState(0);
   const item = items[Math.min(idx, items.length - 1)];
   const [pts, setPts] = useState<number | null>(null);
@@ -48,7 +47,6 @@ export default function QuickMerit({ onSaved }: { onSaved: (m: string) => void }
       <input className="input" style={{ width: 64 }} type="number" min={1} max={5} value={points} onChange={e => setPts(Number(e.target.value))} aria-label="점수" />
       <input className="input" type="date" value={date} onChange={e => setDate(e.target.value)} aria-label="날짜" />
       <button className="btn primary" onClick={save} disabled={!sid}>기록</button>
-      <label className="check tiny"><input type="checkbox" checked={q1Only} onChange={e => { setQ1Only(e.target.checked); setIdx(0); }} /> 1쿼터 적용 항목만</label>
     </div>
   );
 }

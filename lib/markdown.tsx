@@ -24,8 +24,8 @@ export function anchorFor(text: string, level: number, ctx: Ctx): { id: string; 
   if (level === 3) {
     let m = t.match(/^제(\d+)조(?:의(\d+))?/);
     if (m) return { id: `${ctx === 'add' ? 'add-' : ''}art${m[1]}${m[2] ? '-' + m[2] : ''}`, ctx };
-    m = t.match(/^\[별표 (\d+)\]/);
-    if (m) return { id: `bp${m[1]}`, ctx };
+    m = t.match(/^\[별표 (\d+)(?:의(\d+))?\]/);
+    if (m) return { id: `bp${m[1]}${m[2] ? '-' + m[2] : ''}`, ctx };
     return { id: slug(t), ctx };
   }
   return { id: slug(t), ctx };
@@ -33,7 +33,7 @@ export function anchorFor(text: string, level: number, ctx: Ctx): { id: string; 
 
 const slug = (s: string) => s.replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '').toLowerCase();
 
-const INLINE = /(\*\*[^*]+\*\*)|(\[[^\]]+\]\([^)]+\))|(부칙 제\d+조)|(제\d+조(?:의\d+)?)|(별표 \d+)|(별지 \d+)/g;
+const INLINE = /(\*\*[^*]+\*\*)|(\[[^\]]+\]\([^)]+\))|(부칙 제\d+조)|(제\d+조(?:의\d+)?)|(별표 \d+(?:의\d+)?)|(별지 \d+(?:\s*[–~-]\s*\d+)?)/g;
 
 export function inline(text: string, opts: { autolink?: boolean } = {}): ReactNode[] {
   const out: ReactNode[] = [];
@@ -53,8 +53,9 @@ export function inline(text: string, opts: { autolink?: boolean } = {}): ReactNo
     else if (m[4]) {
       const [, a, b] = tok.match(/제(\d+)조(?:의(\d+))?/)!;
       out.push(<Link key={k++} className="ref" href={`/hakchik#art${a}${b ? '-' + b : ''}`}>{tok}</Link>);
-    } else if (m[5]) out.push(<Link key={k++} className="ref" href={`/hakchik#bp${tok.match(/\d+/)![0]}`}>{tok}</Link>);
-    else if (m[6]) out.push(<Link key={k++} className="ref form" href={`/forms/${tok.match(/\d+/)![0]}`}>{tok}</Link>);
+    } else if (m[5]) { const b = tok.match(/(\d+)(?:의(\d+))?/)!; out.push(<Link key={k++} className="ref" href={`/hakchik#bp${b[1]}${b[2] ? '-' + b[2] : ''}`}>{tok}</Link>); }
+    // 별지 N은 그 서식, 별지 1–11처럼 범위면 별지 서식 목록으로
+    else if (m[6]) out.push(<Link key={k++} className="ref form" href={/[–~-]/.test(tok) ? '/forms' : `/forms/${tok.match(/\d+/)![0]}`}>{tok}</Link>);
     last = i + tok.length;
   }
   if (last < text.length) out.push(text.slice(last));

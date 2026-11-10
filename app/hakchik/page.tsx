@@ -26,8 +26,8 @@ export default function HakchikPage() {
       );
     },
   });
-  // 개정 이력의 마지막 행 버전을 현재 버전으로 표시
-  const version = [...md.matchAll(/^\| (\d+\.\d+(?:\.\d+)?) \| \d{4}-\d{2}-\d{2} \|/gm)].pop()?.[1];
+  // 개정 이력의 마지막 행 버전을 현재 버전으로 표시 (이력이 없으면 문서 정보의 버전)
+  const version = [...md.matchAll(/^\| (\d+\.\d+(?:\.\d+)?) \| \d{4}-\d{2}-\d{2} \|/gm)].pop()?.[1] || md.match(/^\| 버전 \| ([^|]+) \|/m)?.[1].trim();
   return (
     <div className="page">
       <PageHead

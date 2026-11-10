@@ -50,7 +50,7 @@ export default function AuthScreen() {
           {mode === 'login' ? '로그인' : first ? '관리자로 가입' : '가입 신청'}
         </button>
         {AUTO_ADMIN && (
-          <button type="button" className="btn" style={{ justifyContent: 'center' }} onClick={auth.enterAsAdmin}>관리자로 바로 들어가기 (개발용)</button>
+          <button type="button" className="btn" style={{ justifyContent: 'center' }} onClick={auth.enterAsAdmin}>관리자로 바로 들어가기 (시안)</button>
         )}
         <p className="tiny muted" style={{ margin: 0, textAlign: 'center' }}>시안: 계정은 이 브라우저에만 저장됩니다.</p>
       </form>

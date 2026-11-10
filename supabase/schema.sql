@@ -176,6 +176,31 @@ create table if not exists grade_sheets (
 );
 
 -- 검정고시 실제 응시 기록과 성적표 (모의 진단평가는 grade_sheets)
+-- 진단평가 (제20조, 별표 7 제4호): 문해력·영어·수학. 학기 첫 주, 체험 입학, 학기 중간 추가(담임 허락)
+create table if not exists diagnostic_exams (
+  id uuid primary key default gen_random_uuid(),
+  subject text not null check (subject in ('문해력', '영어', '수학')),
+  round text not null check (round in ('학기 첫 주', '추가 (학기 중간)', '체험 입학')),
+  date date not null,
+  title text not null,
+  place text,
+  teacher_id uuid references staff (id),
+  form text check (form in ('가형', '나형')),
+  sections jsonb not null default '[]',         -- 평가 영역
+  files jsonb not null default '[]',            -- 문항지·정답: [{path, name}] (Supabase Storage)
+  note text
+);
+create table if not exists diagnostic_results (
+  exam_id uuid not null references diagnostic_exams (id) on delete cascade,
+  student_id uuid not null references students (id) on delete cascade,
+  scores jsonb not null default '{}',           -- {영역: 점수}
+  level text,                                   -- 판정
+  gaps text,                                    -- 빈 단원
+  note text,
+  applied boolean not null default false,       -- 학생 레벨에 반영
+  primary key (exam_id, student_id)
+);
+
 create table if not exists ged_exams (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null references students (id) on delete cascade,
@@ -186,7 +211,7 @@ create table if not exists ged_exams (
   scores jsonb not null default '{}',           -- {과목: 점수}
   electives text,
   report_url text,                              -- 성적표 드라이브 링크
-  report_file text,                             -- Supabase Storage 경로
+  report_file text,                             -- 성적표 파일: Supabase Storage 경로 (시안: reportFileId·reportFileName)
   note text
 );
 
@@ -215,6 +240,45 @@ create table if not exists syllabus_plans (
   content jsonb not null default '{}',          -- goal, profile, levels, method, textbooks, readings, evaluation, blocks, focus, notes
   weekly jsonb not null default '{}',           -- {"쿼터-주차": {topic, task}}
   updated_at timestamptz not null default now()
+);
+
+-- 학교생활기록부 (학년도별, 모든 학교급). 항목은 교육부 기재요령
+create table if not exists school_records (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students (id) on delete cascade,
+  year int not null,
+  content jsonb not null default '{}',          -- special, attendanceNote, awards[], certificates[], activities{autonomy,club,career}, volunteer[], subjects[{kind, semester, area, subject, units, score, achievement, rank, detail}], reading[], behavior
+  status text not null default '작성중' check (status in ('작성중', '검토', '확정')),
+  updated_at timestamptz not null default now(),
+  unique (student_id, year)
+);
+
+-- 졸업 과제 제출 (독서록·포트폴리오 등)과 졸업 요건 확인 (제16조, 별표 2)
+create table if not exists submissions (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students (id) on delete cascade,
+  kind text not null check (kind in ('독서록', '독서 보고서', '포트폴리오', '진로 탐색 보고서', '진로 계획서', '말씀·기도 노트', '프로젝트 결과물', '기타')),
+  title text not null,
+  author text,
+  date date not null,
+  file_path text,                               -- Supabase Storage
+  url text,
+  note text
+);
+create table if not exists grad_checks (
+  student_id uuid not null references students (id) on delete cascade,
+  item text not null,                           -- lib/graduation.ts 항목 키
+  done boolean not null default false,
+  date date,
+  note text,
+  primary key (student_id, item)
+);
+create table if not exists grad_settings (     -- 학교급별 기준 (별표 2의2, 제16조 제2항: 매년 12월 확정)
+  track text primary key check (track in ('초등', '중등', '고등')),
+  reading_count int,
+  en_min text,
+  math_min text,
+  volunteer_hours int
 );
 
 -- 연도별 보관: 지난 학년도의 교과 로드맵·시간표
@@ -280,9 +344,15 @@ alter table attendance enable row level security;
 alter table grade_sheets enable row level security;
 alter table form_records enable row level security;
 alter table ged_exams enable row level security;
+alter table diagnostic_exams enable row level security;
+alter table diagnostic_results enable row level security;
 alter table calendar_events enable row level security;
 alter table syllabus_plans enable row level security;
 alter table archives enable row level security;
+alter table submissions enable row level security;
+alter table school_records enable row level security;
+alter table grad_checks enable row level security;
+alter table grad_settings enable row level security;
 
 create or replace function me() returns staff language sql stable security definer as $$
   select * from staff where user_id = auth.uid() and active and status = '승인'
@@ -330,7 +400,13 @@ create policy templates_read on report_templates for select using ((select me())
 create policy templates_write on report_templates for all
   using ('admin' = any ((select me()).permissions)) with check ('admin' = any ((select me()).permissions));
 create policy ged_all on ged_exams for all using ((select me()) is not null) with check ((select me()) is not null);
+create policy diag_exams_all on diagnostic_exams for all using ((select me()) is not null) with check ((select me()) is not null);
+create policy diag_results_all on diagnostic_results for all using ((select me()) is not null) with check ((select me()) is not null);
 create policy calendar_read on calendar_events for select using ((select me()) is not null);
 create policy calendar_write on calendar_events for all using ('admin' = any ((select me()).permissions) or 'schedule' = any ((select me()).permissions)) with check ('admin' = any ((select me()).permissions) or 'schedule' = any ((select me()).permissions));
 create policy syllabus_all on syllabus_plans for all using ((select me()) is not null) with check ((select me()) is not null);
 create policy archives_all on archives for all using ((select me()) is not null) with check ((select me()) is not null);
+create policy submissions_all on submissions for all using ((select me()) is not null) with check ((select me()) is not null);
+create policy grad_checks_all on grad_checks for all using ((select me()) is not null) with check ((select me()) is not null);
+create policy grad_settings_all on grad_settings for all using ((select me()) is not null) with check ((select me()) is not null);
+create policy school_records_all on school_records for all using ((select me()) is not null) with check ((select me()) is not null);

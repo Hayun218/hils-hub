@@ -5,14 +5,15 @@
 // 1. 처음 가입한 계정은 관리자로 바로 승인된다 (학교 시스템을 처음 여는 사람).
 // 2. 그다음부터 가입한 계정은 '대기' 상태이고, 관리자가 승인해야 들어올 수 있다.
 // 3. 권한은 관리자가 계정마다 부여한다 (lib/permissions.ts).
-// 4. 기획 단계 편의: 개발 서버(npm run dev)에서는 로그인 없이 관리자로 바로 들어간다.
-//    로그아웃하면 그 탭에서는 로그인 화면이 보인다. 끄려면 .env.local에 NEXT_PUBLIC_AUTO_ADMIN=off
+// 4. 시안 단계 편의: 개발 서버와 Vercel 시안 배포 모두 로그인 없이 관리자로 바로 들어간다.
+//    로그아웃하면 그 탭에서는 로그인 화면이 보인다. 끄려면 환경 변수 NEXT_PUBLIC_AUTO_ADMIN=off
+//    (Supabase Auth로 바꿀 때 이 자동 진입은 없앤다)
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Account, AccountStatus, Permission } from './types';
 
 const KEY = 'hils-hub-auth-v1';
 const MANUAL = 'hils-hub-manual-login'; // sessionStorage: 이 탭에서 로그아웃함
-export const AUTO_ADMIN = process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_AUTO_ADMIN !== 'off';
+export const AUTO_ADMIN = process.env.NEXT_PUBLIC_AUTO_ADMIN !== 'off';
 const DEV_ADMIN_EMAIL = 'admin@hils.local';
 
 /** 승인된 관리자 계정을 찾고, 없으면 개발용 관리자 계정을 만든다 */

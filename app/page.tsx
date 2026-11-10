@@ -7,6 +7,7 @@ import { DEMO_TODAY, QUARTER_LABEL, guidanceCount, lateDishes, quarterOf, stageF
 import { fmtRange, upcoming } from '@/lib/calendar';
 import { periodLabel, periodOf } from '@/lib/reports';
 import { Badge } from '@/components/ui';
+import CadenceTodos from '@/components/CadenceTodos';
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -99,6 +100,8 @@ export default function Dashboard() {
           이 계정은 교사와 연결되어 있지 않습니다. {can(auth.me, 'admin') ? <><Link href="/admin/users">계정 승인 · 권한</Link>에서 교사와 연결하면 </> : '관리자가 교사와 연결하면 '}내 담임 학생의 할 일이 여기에 먼저 나옵니다.
         </div>
       )}
+
+      <CadenceTodos students={mine.length ? mine : active} today={today} scope={mine.length ? '내 담임 학생' : '전체 재학생'} />
 
       <div className="grid g4">
         <Tile k="재학생" v={`${active.length}명`} s={`초등 ${active.filter(s => s.schoolLevel === '초등').length} · 중고등 ${active.filter(s => s.schoolLevel === '중고등').length}`} href="/students" />

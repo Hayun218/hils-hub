@@ -34,6 +34,32 @@ export interface Student {
 
 export type GedLevel = '초졸' | '중졸' | '고졸';
 export type GedStatus = '응시 예정' | '합격' | '불합격' | '일부 과목 합격';
+// ───────── 진단평가 (제20조, 제25조 제2항, 별표 7 제4호) ─────────
+export type DiagSubject = '문해력' | '영어' | '수학';
+export type DiagRound = '학기 첫 주' | '추가 (학기 중간)' | '체험 입학';
+export interface DiagResult {
+  scores: Record<string, string>; // 영역 → 점수 (또는 묶음 정답 수)
+  level: string; // 판정 (영어·수학 레벨, 문해력 4단계)
+  gaps?: string; // 빈 단원·보충할 곳
+  note?: string;
+  applied?: boolean; // 학생 레벨에 반영함
+}
+export interface DiagnosticExam {
+  id: string;
+  subject: DiagSubject;
+  round: DiagRound;
+  date: string;
+  title: string;
+  place: string;
+  teacher: string; // 담당 교사 id
+  form: '가형' | '나형'; // 학기마다 다른 문항 (별표 7 제4호 ③)
+  sections: string[]; // 평가 영역
+  files: { id: string; name: string }[]; // 문항지·정답 (lib/fileStore.ts → 운영: Supabase Storage)
+  students: string[];
+  results: Record<string, DiagResult>; // studentId → 결과
+  note?: string;
+}
+
 /** 검정고시 실제 응시 기록과 성적표 (모의 진단평가는 GradeSheet) */
 export interface GedExam {
   id: string;
@@ -45,7 +71,9 @@ export interface GedExam {
   scores: Record<string, string>; // 과목 → 점수
   electives?: string; // 선택 과목 이름
   reportUrl?: string; // 성적표 드라이브 링크
-  reportFile?: { name: string; type: string; dataUrl: string }; // 작은 성적표 파일 (시안: 브라우저 저장)
+  reportFileId?: string; // 성적표 파일 (lib/fileStore.ts IndexedDB → 운영: Supabase Storage)
+  reportFileName?: string;
+  reportFile?: { name: string; type: string; dataUrl: string }; // 예전 버전: 작은 파일을 데이터로 저장
   note?: string;
 }
 
@@ -203,6 +231,70 @@ export interface SyllabusPlan {
   updatedAt: string;
 }
 
+// ───────── 졸업 과제 제출·졸업 요건 (제16조, 별표 2) ─────────
+
+export type SubmissionKind = '독서록' | '독서 보고서' | '포트폴리오' | '진로 탐색 보고서' | '진로 계획서' | '말씀·기도 노트' | '프로젝트 결과물' | '기타';
+export interface Submission {
+  id: string;
+  studentId: string;
+  kind: SubmissionKind;
+  title: string; // 독서록이면 책 제목
+  author?: string; // 독서록: 지은이
+  date: string;
+  fileId?: string; // lib/fileStore.ts (IndexedDB) → 운영: Supabase Storage
+  fileName?: string;
+  url?: string; // 드라이브 링크
+  note?: string;
+  content?: Record<string, string>; // 웹에서 쓴 독서록 (lib/readingLog.ts 칸)
+}
+export interface GradCheck { done: boolean; date?: string; note?: string }
+export type GradTrack = '초등' | '중등' | '고등'; // 초등 수료 · 중등 수료 · 고등 졸업 (별표 2)
+export interface GradTrackSettings {
+  readingCount: number | null; // 독서 권수 (제16조 제2항: 매년 12월 확정, 지금 값은 별표 2 초안)
+  enMin: string; // 영어 최소 레벨
+  mathMin: string; // 수학 최소 도달 수준
+  volunteerHours: number | null; // 봉사 시간 (생기부 봉사활동 실적 합계)
+}
+export type GradSettings = Record<GradTrack, GradTrackSettings>;
+
+// ───────── 학교생활기록부 (교육부 학교생활기록부 기재요령 항목, 모든 학교급) ─────────
+
+// 학교가 쓰던 학교생활세부사항기록부(학교생활기록부 Ⅱ) 구성: 학년도마다 1부, 출력은 학년 누적
+export interface SrAward { semester: string; name: string; grade: string; date: string; org: string; target: string } // 수상경력
+export interface SrCert { kind: string; name: string; number: string; date: string; issuer: string } // 자격증 및 인증
+export interface SrActivity { hours: string; text: string; club?: string; hope?: string } // 창체 영역 (동아리 이름, 진로 희망분야)
+export interface SrVolunteer { period: string; place: string; content: string; hours: string } // 봉사활동 실적 (place: (학교)/(개인)/기관)
+export type SrSubjectKind = '일반' | '진로 선택' | '체육·예술';
+export interface SchoolRecordSubject {
+  kind: SrSubjectKind;
+  semester: string; // 1, 2
+  area: string; // 교과 (수학, 영어, 신앙 …)
+  subject: string; // 과목
+  units: string; // 단위수
+  score: string; // 원점수/과목평균(표준편차)
+  achievement: string; // 성취도(수강자수)
+  rank: string; // 석차등급 (진로 선택: 성취도별 분포비율)
+  detail: string; // 세부능력 및 특기사항
+  note?: string;
+}
+export interface SrBook { area: string; semester: string; books: string } // 독서활동: 영역(공통·문학·신앙 …), 학기, 책(지은이)
+export interface SchoolRecordDoc {
+  id: string;
+  studentId: string;
+  year: number; // 학년도
+  special: string; // 인적·학적 특기사항 (검정고시 합격 등)
+  attendanceNote: string; // 출결 특기사항 (개근 등)
+  awards: SrAward[];
+  certificates: SrCert[];
+  activities: { autonomy: SrActivity; club: SrActivity; career: SrActivity };
+  volunteer: SrVolunteer[];
+  subjects: SchoolRecordSubject[];
+  reading: SrBook[];
+  behavior: string; // 행동특성 및 종합의견
+  status: '작성중' | '검토' | '확정';
+  updatedAt: string;
+}
+
 // ───────── 연도별 보관 (지난 학년도 교과 로드맵·시간표 보기) ─────────
 
 export interface ArchiveEntry {
@@ -285,8 +377,13 @@ export interface HubState {
   grades: GradeSheet[];
   forms: FormRecord[];
   gedExams: GedExam[];
+  diagnostics: DiagnosticExam[]; // 진단평가 (제20조, 별표 7 제4호)
   syllabi: SyllabusPlan[];
   archives: ArchiveEntry[];
+  submissions: Submission[];
+  schoolRecords: SchoolRecordDoc[];
+  gradChecks: Record<string, Record<string, GradCheck>>; // studentId → 항목 → 확인
+  gradSettings: GradSettings;
   calendar: CalendarEvent[]; // 학사일정 (기본: 2027학년도, lib/calendar.ts)
   calendarTheme?: string;
   roadmaps: RoadmapDef[]; // 보고서 공통 양식
