@@ -1,0 +1,26 @@
+# ── 의존성·빌드 ──
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── 환경 변수 (Supabase 키 등) ──
+.env
+.env*.local
+
+# ── 배포·도구 ──
+.vercel/
+.claude/settings.local.json
+.idea/
+.vscode/
+*.log
+npm-debug.log*
+.DS_Store
+
+# ── 개인정보: 실제 학생·교직원 이름, 사진, 강점 자료 (CLAUDE.md, 학칙 제38조) ──
+reference/private/
+
+# ── 학칙·서식 편집 시 자동 백업 ──
+.hakchik-history/
