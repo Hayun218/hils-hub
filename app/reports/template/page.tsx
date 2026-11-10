@@ -9,6 +9,9 @@ import { DEFAULT_TEMPLATE } from '@/lib/reports';
 import type { RoadmapDef, RoadmapItem } from '@/lib/types';
 import RoadmapView from '@/components/Roadmap';
 import RoadmapEditor from '@/components/RoadmapEditor';
+import ArchiveBar from '@/components/ArchiveBar';
+import { SCHOOL_YEAR } from '@/lib/rules';
+import type { RoadmapDef as RD } from '@/lib/types';
 import { PageHead } from '@/components/ui';
 
 /** 행 이름별 줄 수로 행 범위를 다시 계산 */
@@ -77,10 +80,13 @@ export default function TemplatePage() {
   return (
     <div className="page wide">
       <PageHead
-        title="커리큘럼 설계"
+        title="교과 로드맵"
         desc="교과별 로드맵(커리큘럼)과 과목 평가의 기본 과목을 정합니다. 여기서 고치면 모든 학생의 학습 진도 보고서에 바로 적용되고, 학생별 진도 표시는 그대로 남습니다 (제29조 제4항)."
         right={<>
           {editable && <button className="btn" onClick={() => { if (confirm('로드맵과 기본 과목을 처음 양식(2025년 3월 보고서)으로 되돌릴까요?')) { hub.setRoadmaps(DEFAULT_ROADMAPS); hub.setReportTemplate(DEFAULT_TEMPLATE); setRid(DEFAULT_ROADMAPS[0].id); setSel(null); } }}>처음 양식으로</button>}
+          <ArchiveBar kind="roadmaps" year={SCHOOL_YEAR} label={`${SCHOOL_YEAR}학년도 교과 로드맵`} current={hub.roadmaps}
+            onRestore={d => hub.setRoadmaps(d as RD[])}
+            renderView={d => <div className="stack">{(d as RD[]).map(r => <RoadmapView key={r.id} rm={r} />)}</div>} />
           <Link className="btn primary" href="/reports">보고서 목록</Link>
         </>}
       />

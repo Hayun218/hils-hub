@@ -90,19 +90,28 @@ export interface StudentRecord {
   data: Record<string, string | number | boolean>;
 }
 
+/** 비품 구입: 신청 → 확인(OK, 회계 관리자) → 구입 완료(✅) → 전표 등록. 반려 가능 (Slack #비품구입 절차를 옮김) */
 export type PurchaseStatus = '신청' | '승인' | '반려' | '구매완료' | '전표등록';
 
 export interface PurchaseRequest {
   id: string;
-  date: string;
-  item: string;
-  amount: number;
+  date: string; // 신청일
+  item: string; // 신청 물품
+  quantity?: string; // 수량 (예: 3set, 1 set = 4개)
+  amount: number; // 예상 금액 (범위면 큰 값)
+  amountMin?: number; // 예상 금액 범위의 작은 값
+  vendor?: string; // 구입처
   category: string; // 예산 항목
-  reason: string;
-  requester: string;
+  reason: string; // 구입 목적
+  requester: string; // Teacher.id
   status: PurchaseStatus;
   decidedBy?: string;
   decidedAt?: string;
+  rejectReason?: string;
+  purchasedBy?: string; // 구입한 교직원
+  purchasedAt?: string;
+  actualAmount?: number; // 실제 금액
+  purchaseNote?: string; // 대체 구입 등 (예: 1.0이 없어서 다른 제품)
   voucher?: {
     no: string;
     date: string;
@@ -172,7 +181,7 @@ export interface ProgressReport {
 
 // ───────── 과목 운영안 (별지 6, 제21조): 실라버스 + 주차별 계획 ─────────
 
-export interface SyllabusWeek { topic: string; task: string }
+export interface SyllabusWeek { topic: string; task: string; note?: string } // note: 학사일정 칸에 직접 적은 내용
 export interface SyllabusPlan {
   id: string;
   subject: string;
@@ -192,6 +201,17 @@ export interface SyllabusPlan {
   weekly: Record<string, SyllabusWeek>; // 'q-주차' → 계획
   notes: string; // 운영상 필요 사항
   updatedAt: string;
+}
+
+// ───────── 연도별 보관 (지난 학년도 교과 로드맵·시간표 보기) ─────────
+
+export interface ArchiveEntry {
+  id: string;
+  kind: 'roadmaps' | 'timetable';
+  year: number;
+  label: string; // 예: 2027학년도, 2027학년도 1쿼터
+  data: unknown; // roadmaps: RoadmapDef[] / timetable: TimetableBlock[]
+  savedAt: string;
 }
 
 // ───────── 학사일정 ─────────
@@ -266,6 +286,7 @@ export interface HubState {
   forms: FormRecord[];
   gedExams: GedExam[];
   syllabi: SyllabusPlan[];
+  archives: ArchiveEntry[];
   calendar: CalendarEvent[]; // 학사일정 (기본: 2027학년도, lib/calendar.ts)
   calendarTheme?: string;
   roadmaps: RoadmapDef[]; // 보고서 공통 양식

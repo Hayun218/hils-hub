@@ -22,6 +22,22 @@ export default function CalendarPage() {
   const theme = hub.calendarTheme || 'green';
   const [editId, setEditId] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
+  // 학년도: 데이터가 있는 해는 편집 목록, 원본 이미지만 있는 해는 이미지로 (자료가 없는 해는 뺀다)
+  const dataYears = [...new Set(list.map(e => Number(e.start.slice(0, 4))))];
+  const [images, setImages] = useState<{ year: number; image?: string; pdf?: string }[]>([]);
+  useEffect(() => { fetch('/api/calendar-archive').then(r => r.json()).then(j => setImages(j.years || [])).catch(() => {}); }, []);
+  const years = [...new Set([...dataYears, ...images.map(i => i.year)])].sort((a, b) => b - a);
+  const [year, setYear] = useState(2027);
+  const nextYear = Math.max(...dataYears, 2027) + 1;
+  const img = !dataYears.includes(year) ? images.find(i => i.year === year) : undefined;
+  const startNext = () => {
+    const prev = Math.max(...dataYears);
+    if (!confirm(`${prev}학년도 일정을 복사해 ${prev + 1}학년도를 시작할까요? 요일이 바뀌니 날짜를 꼭 확인하세요.`)) return;
+    const shift = (d?: string) => (d ? `${Number(d.slice(0, 4)) + 1}${d.slice(4)}` : undefined);
+    const copy = list.filter(e => e.start.startsWith(String(prev))).map(e => ({ ...e, id: hub.newId('ev'), start: shift(e.start)!, end: shift(e.end) }));
+    commit([...list, ...copy]);
+    setYear(prev + 1);
+  };
   const sheetRef = useRef<HTMLDivElement>(null);
   usePrintFit(sheetRef, { onBefore: () => setEditId(null) });
   const [past, setPast] = useState<CalendarEvent[][]>([]);
@@ -35,6 +51,7 @@ export default function CalendarPage() {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
       if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+      if (e.key === 'Escape') setEditId(null);
     };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
@@ -42,28 +59,33 @@ export default function CalendarPage() {
 
   const up = (id: string, p: Partial<CalendarEvent>) => commit(list.map(e => (e.id === id ? { ...e, ...p } : e)));
   const add = (m: number) => {
-    const e: CalendarEvent = { id: hub.newId('ev'), start: `2027-${String(m).padStart(2, '0')}-01`, title: '새 일정', kind: '행사' };
+    const e: CalendarEvent = { id: hub.newId('ev'), start: `${year}-${String(m).padStart(2, '0')}-01`, title: '새 일정', kind: '행사' };
     commit([...list, e]); setEditId(e.id);
   };
-  const ofMonth = (m: number) => list.filter(e => Number(e.start.slice(5, 7)) === m && e.start.startsWith('2027')).sort((a, b) => a.start.localeCompare(b.start));
+  const ofMonth = (m: number) => list.filter(e => Number(e.start.slice(5, 7)) === m && e.start.startsWith(String(year))).sort((a, b) => a.start.localeCompare(b.start));
   const half = (ms: number[]) => ms.map(m => (
     <div key={m} className="cal-row">
       <div className="cal-m">{m}월</div>
       <ul className="cal-ev">
-        {ofMonth(m).map(e => editId === e.id ? (
-          <li key={e.id} className="cal-edit no-print">
-            <input type="date" value={e.start} onChange={x => up(e.id, { start: x.target.value })} aria-label="시작일" />
-            <input type="date" value={e.end || ''} onChange={x => up(e.id, { end: x.target.value || undefined })} aria-label="끝일" />
-            <input value={e.title} onChange={x => up(e.id, { title: x.target.value })} aria-label="일정" autoFocus />
-            <select value={e.kind} onChange={x => up(e.id, { kind: x.target.value as EventKind })} aria-label="구분">{KINDS.map(k => <option key={k}>{k}</option>)}</select>
-            <input value={e.note || ''} onChange={x => up(e.id, { note: x.target.value || undefined })} placeholder="비고 (귀가, 해당 학생 등)" aria-label="비고" />
-            <button className="btn sm" onClick={() => setEditId(null)}>완료</button>
-            <button className="btn sm warn" onClick={() => { commit(list.filter(x => x.id !== e.id)); setEditId(null); }}>삭제</button>
-          </li>
-        ) : (
-          <li key={e.id} className={`cal-line${red(e.kind) ? ' holiday' : ''}`} onClick={() => setEditId(e.id)} title="눌러서 고치기">
+        {ofMonth(m).map(e => (
+          <li key={e.id} className={`cal-line${red(e.kind) ? ' holiday' : ''}${editId === e.id ? ' editing' : ''}`} onClick={() => setEditId(editId === e.id ? null : e.id)} title="눌러서 고치기">
             <span className="d">{fmtRange(e)}</span>
             <span className="t">{e.title}{e.note && <em> ({e.note})</em>}</span>
+            {editId === e.id && (
+              <div className="cal-pop no-print" onClick={x => x.stopPropagation()}>
+                <div className="cal-pop-row">
+                  <label>날짜<input type="date" value={e.start} onChange={x => up(e.id, { start: x.target.value })} /></label>
+                  <label>끝<input type="date" value={e.end || ''} onChange={x => up(e.id, { end: x.target.value || undefined })} /></label>
+                  <label>구분<select value={e.kind} onChange={x => up(e.id, { kind: x.target.value as EventKind })}>{KINDS.map(k => <option key={k}>{k}</option>)}</select></label>
+                </div>
+                <label>일정<input value={e.title} onChange={x => up(e.id, { title: x.target.value })} autoFocus /></label>
+                <label>비고<input value={e.note || ''} onChange={x => up(e.id, { note: x.target.value || undefined })} placeholder="귀가, 해당 학생 등" /></label>
+                <div className="cal-pop-actions">
+                  <button className="btn sm warn" onClick={() => { commit(list.filter(x => x.id !== e.id)); setEditId(null); }}>삭제</button>
+                  <button className="btn sm primary" onClick={() => setEditId(null)}>완료</button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
         <li className="cal-add no-print"><button onClick={() => add(m)}>+ 일정</button></li>
@@ -75,25 +97,38 @@ export default function CalendarPage() {
     <div className="page wide print-solo">
       <LandscapePage />
       <div className="spread no-print" style={{ marginBottom: 12 }}>
-        <div className="small muted">2027학년도 학사일정 · 줄을 누르면 고칩니다 · 빨간 글씨는 휴일·방학 <ArtLink no={24} /> <ArtLink no={27} /></div>
+        <div className="row">
+          <div className="seg">
+            {years.map(y => <button key={y} className={year === y ? 'on' : ''} onClick={() => { setYear(y); setEditId(null); }}>{y}{!dataYears.includes(y) ? ' (원본)' : ''}</button>)}
+            <button onClick={startNext} title="작년 일정을 복사해 새 학년도 시작">+ {nextYear}</button>
+          </div>
+          <span className="small muted">{img ? '지난 학년도 원본 (보기만)' : '줄을 누르면 고칩니다 · 빨간 글씨는 휴일·방학'} <ArtLink no={24} /> <ArtLink no={27} /></span>
+        </div>
         <div className="row">
           <span className="xl-tools"><button onClick={undo} disabled={!past.length} title="되돌리기 (⌘Z)">↶</button><button onClick={redo} disabled={!future.length} title="다시 실행 (⌘⇧Z)">↷</button></span>
           <button className="btn" disabled title="나중에 공공데이터포털 특일 정보(한국천문연구원) API로 공휴일·대체공휴일을 불러옵니다">공휴일 불러오기 (준비 중)</button>
-          <button className="btn" onClick={() => setPicking(true)}>디자인 변경</button>
+          {!img && <button className="btn" onClick={() => setPicking(true)}>디자인 변경</button>}
           <button className="btn primary" onClick={() => window.print()}>인쇄</button>
         </div>
       </div>
 
+      {img ? (
+        <div className="print-target"><div ref={sheetRef} className="cal-archive print-sheet">
+          <img src={img.image} alt={`${year}학년도 학사일정`} />
+          {img.pdf && <a className="small no-print" href={img.pdf} target="_blank" rel="noreferrer">원본 PDF 열기 ↗</a>}
+        </div></div>
+      ) : (
       <div className="print-target"><div ref={sheetRef} className={`cal-poster print-sheet theme-${theme}`}>
         {theme === 'wave' && <div className="cal-side"><img src="/hils-logo.png" alt="" /><p>하나님의 임재와 영광을<br />운반하게 하소서!</p></div>}
         <div className="cal-main">
-          <div className="cal-title"><img src="/hils-logo.png" alt="" /><h1>HILS 2027학년도 학사일정</h1></div>
+          <div className="cal-title"><img src="/hils-logo.png" alt="" /><h1>HILS {year}학년도 학사일정</h1></div>
           <div className="cal-cols">
             <div>{half(MONTHS.slice(0, 6))}</div>
             <div>{half(MONTHS.slice(6))}</div>
           </div>
         </div>
       </div></div>
+      )}
 
       {picking && (
         <div className="modal-bg no-print" onClick={() => setPicking(false)}>

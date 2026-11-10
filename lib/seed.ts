@@ -96,4 +96,4 @@ export const purchases: PurchaseRequest[] = [
   { id: 'p5', date: '2027-03-14', item: '영어 원서 세트', amount: 310000, category: '교재비', reason: 'EN-A 필독서', requester: 't1', status: '신청' },
 ];
 
-export const seed: HubState = { students, teachers, records, purchases, progress: {}, reports: [], prayers: {}, timetable: [], attendance: {}, grades: [], forms: [], gedExams: [], syllabi: [], calendar: DEFAULT_CALENDAR, roadmaps: DEFAULT_ROADMAPS, reportTemplate: DEFAULT_TEMPLATE };
+export const seed: HubState = { students, teachers, records, purchases, progress: {}, reports: [], prayers: {}, timetable: [], attendance: {}, grades: [], forms: [], gedExams: [], syllabi: [], archives: [], calendar: DEFAULT_CALENDAR, roadmaps: DEFAULT_ROADMAPS, reportTemplate: DEFAULT_TEMPLATE };

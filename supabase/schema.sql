@@ -98,10 +98,18 @@ create table if not exists purchases (
   amount int not null check (amount >= 0),
   category text not null,
   reason text,
+  quantity text,
+  amount_min int,
+  vendor text,
   requester uuid references staff (id),
   status text not null default '신청' check (status in ('신청', '승인', '반려', '구매완료', '전표등록')),
   decided_by uuid references staff (id),
   decided_at date,
+  reject_reason text,
+  purchased_by uuid references staff (id),
+  purchased_at date,
+  actual_amount int,
+  purchase_note text,
   voucher jsonb,                                -- {no, date, method, vendor, amount, file_path}
   created_at timestamptz not null default now()
 );
@@ -209,7 +217,17 @@ create table if not exists syllabus_plans (
   updated_at timestamptz not null default now()
 );
 
--- 학사일정
+-- 연도별 보관: 지난 학년도의 교과 로드맵·시간표
+create table if not exists archives (
+  id uuid primary key default gen_random_uuid(),
+  kind text not null check (kind in ('roadmaps', 'timetable')),
+  year int not null,
+  label text not null,
+  data jsonb not null,
+  saved_at timestamptz not null default now()
+);
+
+-- 학사일정 (날짜에 연도가 있어 학년도별로 쌓인다)
 create table if not exists calendar_events (
   id uuid primary key default gen_random_uuid(),
   start_date date not null,
@@ -264,6 +282,7 @@ alter table form_records enable row level security;
 alter table ged_exams enable row level security;
 alter table calendar_events enable row level security;
 alter table syllabus_plans enable row level security;
+alter table archives enable row level security;
 
 create or replace function me() returns staff language sql stable security definer as $$
   select * from staff where user_id = auth.uid() and active and status = '승인'
@@ -314,3 +333,4 @@ create policy ged_all on ged_exams for all using ((select me()) is not null) wit
 create policy calendar_read on calendar_events for select using ((select me()) is not null);
 create policy calendar_write on calendar_events for all using ('admin' = any ((select me()).permissions) or 'schedule' = any ((select me()).permissions)) with check ('admin' = any ((select me()).permissions) or 'schedule' = any ((select me()).permissions));
 create policy syllabus_all on syllabus_plans for all using ((select me()) is not null) with check ((select me()) is not null);
+create policy archives_all on archives for all using ((select me()) is not null) with check ((select me()) is not null);

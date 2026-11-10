@@ -8,6 +8,8 @@ import { DAY_NAMES, checkRules, dur, fromGenerated, fromMin, groupPresets, layou
 import type { TimetableBlock } from '@/lib/types';
 import { PageHead, ArtLink, Badge } from '@/components/ui';
 import PosterHeader from '@/components/PosterHeader';
+import ArchiveBar from '@/components/ArchiveBar';
+import { DEMO_TODAY, quarterOf } from '@/lib/rules';
 import { LandscapePage, usePrintFit } from '@/components/usePrintFit';
 
 const SCREEN_PPM = 1.1; // 화면: 1분당 px
@@ -160,6 +162,7 @@ export default function TimetablePage() {
         title="시간표"
         desc={<>학칙 기준(75분 블록, 휴식 15분, 별표 5 시간)으로 자동 생성한 뒤 직접 고칩니다. 학칙과 다르게 고칠 수 있지만 권장하지 않으며, 다른 곳은 오른쪽 검사에 표시됩니다 <ArtLink no={26} /> <Link className="chip" href="/hakchik#bp5">별표 5</Link></>}
         right={<>
+          <ArchiveBar kind="timetable" year={Number(DEMO_TODAY.slice(0, 4))} label={`${DEMO_TODAY.slice(0, 4)}학년도 ${quarterOf(DEMO_TODAY)}쿼터 시간표`} current={blocks} onRestore={d => commit(d as TimetableBlock[])} />
           <button className="btn" onClick={() => window.print()}>인쇄</button>
           <button className="btn primary" onClick={() => setGen(true)}>학칙 기준으로 자동 생성</button>
         </>}

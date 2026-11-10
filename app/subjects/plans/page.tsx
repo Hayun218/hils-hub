@@ -5,9 +5,29 @@ import { useMemo, useState } from 'react';
 import { useHub } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { SCHOOL_YEAR, QUARTER_LABEL } from '@/lib/rules';
-import { md, quarterRange, weeksOf } from '@/lib/weeks';
+import { md, quarterRange, weeksOf, type Week } from '@/lib/weeks';
+import type { CalendarEvent } from '@/lib/types';
 import type { SyllabusPlan } from '@/lib/types';
 import { PageHead, ArtLink, Badge } from '@/components/ui';
+
+/** 학사일정으로 주차별 계획 채우기: 빈 칸만 채운다 (수업 없는 주·진단·점검·수업일이 줄어든 주) */
+function autoWeekly(cal: CalendarEvent[], weekly: SyllabusPlan['weekly']) {
+  const out = { ...weekly };
+  for (const q of [1, 2, 3, 4]) {
+    for (const w of weeksOf(cal, q) as Week[]) {
+      const k = w.off ? `${q}-${w.mon}` : `${q}-${w.no}`;
+      const cur = out[k] || { topic: '', task: '' };
+      if (cur.topic.trim()) continue;
+      const ev = w.events.map(e => e.title).join(', ');
+      const topic = w.off ? '수업 없음'
+        : w.role === '진단' ? '진단·레벨 확정 (제25조)'
+        : w.role === '점검' ? '점검 · 학습 진도 보고서 작성 (제25조)'
+        : w.classDays < 5 && ev ? `수업 ${w.classDays}일 (${ev})` : '';
+      if (topic) out[k] = { ...cur, topic };
+    }
+  }
+  return out;
+}
 
 const SUBJECTS = ['영어', '수학', '사고력·독서', '영성', '국어', '통합사회 / 통합과학', '한자', '기초교과'];
 const TONE = { 작성중: 'gold', 검토: 'orange', 승인: 'green' } as const;
@@ -17,15 +37,21 @@ export default function PlansPage() {
   const auth = useAuth();
   const [openId, setOpenId] = useState<string | null>(null);
   const plan = hub.syllabi.find(p => p.id === openId);
+  const years = [...new Set([SCHOOL_YEAR, ...hub.syllabi.map(p => p.year)])].sort((a, b) => b - a);
+  const [yf, setYf] = useState(SCHOOL_YEAR);
+  const copyNext = (p: SyllabusPlan) => {
+    const c: SyllabusPlan = { ...JSON.parse(JSON.stringify(p)), id: hub.newId('sy'), year: p.year + 1, status: '작성중', weekly: autoWeekly(hub.calendar, {}) };
+    hub.saveSyllabus(c); setYf(c.year);
+  };
   const newPlan = () => {
     const p: SyllabusPlan = {
       id: hub.newId('sy'), subject: '영어', target: '', year: SCHOOL_YEAR, teacher: auth.me?.teacherId || '', status: '작성중',
       goal: '', profile: '', levels: '', method: '', textbooks: '', readings: '', evaluation: { diagnosis: '', formative: '', final: '' },
-      blocks: {}, focus: {}, weekly: {}, notes: '', updatedAt: new Date().toISOString(),
+      blocks: {}, focus: {}, weekly: autoWeekly(hub.calendar, {}), notes: '', updatedAt: new Date().toISOString(),
     };
     hub.saveSyllabus(p); setOpenId(p.id);
   };
-  const filled = (p: SyllabusPlan) => Object.values(p.weekly).filter(w => w.topic.trim()).length;
+  const filled = (p: SyllabusPlan) => Object.values(p.weekly).filter(w => w.topic?.trim()).length;
 
   if (plan) return <PlanSheet plan={plan} onBack={() => setOpenId(null)} />;
 
@@ -36,18 +62,20 @@ export default function PlansPage() {
         desc={<>코어 과목마다 한 부: 목표, 레벨, 수업 방식·교재, 평가, 쿼터별 시간과 주차별 계획. 교육과정 담당 검토 → 학교장 승인, 매년 12월 다음 학년도 확정 <ArtLink no={21} /></>}
         right={<button className="btn primary" onClick={newPlan}>+ 새 과목 운영안</button>}
       />
+      <div className="seg" style={{ marginBottom: 10 }}>{years.map(y => <button key={y} className={yf === y ? 'on' : ''} onClick={() => setYf(y)}>{y}학년도</button>)}</div>
       <div className="card" style={{ padding: 0 }}>
         <table className="t">
           <thead><tr><th>과목</th><th>대상</th><th>학년도</th><th>담당</th><th>주차 계획</th><th>상태</th><th /></tr></thead>
           <tbody>
-            {hub.syllabi.map(p => (
+            {hub.syllabi.filter(p => p.year === yf).map(p => (
               <tr key={p.id} className="clickable" onClick={() => setOpenId(p.id)}>
                 <td><b>{p.subject}</b></td><td className="small">{p.target || '-'}</td><td className="small">{p.year}</td>
                 <td className="small">{p.teacher ? hub.teacherName(p.teacher) : '-'}</td><td className="small">{filled(p)}주 작성</td>
-                <td><Badge tone={TONE[p.status]}>{p.status}</Badge></td><td style={{ textAlign: 'right' }}><span className="small muted">열기 →</span></td>
+                <td><Badge tone={TONE[p.status]}>{p.status}</Badge></td>
+                <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}><button className="btn sm" onClick={e => { e.stopPropagation(); copyNext(p); }} title="목표·교재·평가는 그대로, 주차는 새 학사일정으로">{p.year + 1}학년도로 복사</button></td>
               </tr>
             ))}
-            {hub.syllabi.length === 0 && <tr><td colSpan={7} className="muted" style={{ textAlign: 'center', padding: 32 }}>아직 운영안이 없습니다. "새 과목 운영안"으로 시작하세요.</td></tr>}
+            {hub.syllabi.filter(p => p.year === yf).length === 0 && <tr><td colSpan={7} className="muted" style={{ textAlign: 'center', padding: 32 }}>아직 운영안이 없습니다. "새 과목 운영안"으로 시작하세요.</td></tr>}
           </tbody>
         </table>
       </div>
@@ -63,8 +91,10 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
   const weeks = useMemo(() => weeksOf(hub.calendar, q), [hub.calendar, q]);
   const range = quarterRange(hub.calendar, q);
   const onWeeks = weeks.filter(w => !w.off);
-  const wk = (n: number) => p.weekly[`${q}-${n}`] || { topic: '', task: '' };
-  const setWk = (n: number, patch: Partial<{ topic: string; task: string }>) => up({ weekly: { ...p.weekly, [`${q}-${n}`]: { ...wk(n), ...patch } } });
+  // 주차 키: 수업 주는 '쿼터-주차', 수업 없는 주는 '쿼터-월요일날짜'
+  const keyOf = (w: { no: number; mon: string; off: boolean }) => (w.off ? `${q}-${w.mon}` : `${q}-${w.no}`);
+  const wk = (k: string) => p.weekly[k] || { topic: '', task: '' };
+  const setWk = (k: string, patch: Partial<{ topic: string; task: string; note: string }>) => up({ weekly: { ...p.weekly, [k]: { ...wk(k), ...patch } } });
   const area = (v: string, on: (x: string) => void, ph: string, label: string) => <textarea className="paper-area" value={v} onChange={e => on(e.target.value)} placeholder={ph} aria-label={label} />;
 
   return (
@@ -129,6 +159,7 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
             <div className="row no-print" style={{ marginBottom: 6 }}>
               <div className="seg">{[1, 2, 3, 4].map(n => <button key={n} className={q === n ? 'on' : ''} onClick={() => setQ(n)}>{n}쿼터</button>)}</div>
               <span className="tiny muted">{range ? `${md(range.start)}–${md(range.end)} · 수업 ${onWeeks.length}주` : '학사일정에 이 쿼터 개학·방학이 없습니다'}</span>
+              <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => up({ weekly: autoWeekly(hub.calendar, p.weekly) })} title="빈 칸만 채웁니다">학사일정으로 다시 채우기</button>
             </div>
             <table className="paper-table"><tbody>
               <tr><th>{QUARTER_LABEL[q]}</th><td>주당 <input style={{ width: 50, display: 'inline-block' }} type="number" min={0} value={p.blocks[q] ?? ''} onChange={e => up({ blocks: { ...p.blocks, [q]: Number(e.target.value) } })} aria-label="주당 블록" /> 블록 · 중점 <input style={{ width: 'calc(100% - 170px)', display: 'inline-block' }} value={p.focus[q] || ''} onChange={e => up({ focus: { ...p.focus, [q]: e.target.value } })} aria-label="중점 내용" /></td></tr>
@@ -136,17 +167,19 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
             <table className="paper-table weekly">
               <thead><tr><th style={{ width: 54 }}>주차</th><th style={{ width: 84 }}>기간</th><th style={{ width: 170 }}>학사일정</th><th>단원·주제</th><th>활동·과제·평가</th></tr></thead>
               <tbody>
-                {weeks.map(w => (
-                  <tr key={w.mon} className={w.off ? 'off' : w.role ? 'role' : undefined}>
-                    <td>{w.off ? '-' : `${w.no}주`}</td>
-                    <td className="small">{md(w.mon)}–{md(w.fri)}{!w.off && w.classDays < 5 && <div className="tiny muted">수업 {w.classDays}일</div>}</td>
-                    <td className="tiny">{w.events.map(e => e.title).join(', ')}</td>
-                    {w.off ? <td colSpan={2} className="small muted">수업 없음</td> : <>
-                      <td><input value={wk(w.no).topic} onChange={e => setWk(w.no, { topic: e.target.value })} placeholder={w.role === '진단' ? '진단·레벨 확정 (제25조)' : w.role === '점검' ? '점검·학습 진도 보고서 (제25조)' : ''} aria-label={`${w.no}주 주제`} /></td>
-                      <td><input value={wk(w.no).task} onChange={e => setWk(w.no, { task: e.target.value })} aria-label={`${w.no}주 과제`} /></td>
-                    </>}
-                  </tr>
-                ))}
+                {weeks.map(w => {
+                  const k = keyOf(w);
+                  const ref = w.events.map(e => e.title).join(', ');
+                  return (
+                    <tr key={w.mon} className={w.off ? 'off' : w.role ? 'role' : undefined}>
+                      <td>{w.off ? '-' : `${w.no}주`}</td>
+                      <td className="small">{md(w.mon)}–{md(w.fri)}{!w.off && w.classDays < 5 && <div className="tiny muted">수업 {w.classDays}일</div>}</td>
+                      <td><input className="cal-ref" value={wk(k).note || ''} onChange={e => setWk(k, { note: e.target.value })} placeholder={ref || (w.off ? '수업 없음' : '')} title={ref ? `학사일정: ${ref}` : undefined} aria-label={`${md(w.mon)} 주 학사일정 메모`} /></td>
+                      <td><input value={wk(k).topic || (w.off ? '수업 없음' : '')} onChange={e => setWk(k, { topic: e.target.value })} aria-label={`${md(w.mon)} 주 주제`} /></td>
+                      <td><input value={wk(k).task} onChange={e => setWk(k, { task: e.target.value })} aria-label={`${md(w.mon)} 주 과제`} /></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </section>

@@ -4,7 +4,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type {
   HubState, Student, StudentRecord, PurchaseRequest, Teacher, RoadmapCell, ProgressReport, TimetableBlock,
-  AttendanceEntry, GradeSheet, FormRecord, RoadmapDef, ReportTemplate, GedExam, SyllabusPlan,
+  AttendanceEntry, GradeSheet, FormRecord, RoadmapDef, ReportTemplate, GedExam, SyllabusPlan, ArchiveEntry,
 } from './types';
 import { seed } from './seed';
 import { demeritsInQuarter, guidanceCount, quarterOf, stageFor } from './rules';
@@ -33,7 +33,7 @@ async function initialState(): Promise<{ state: HubState; source: 'roster' | 'de
   const { students, teachers } = await fetchRoster();
   if (students.length) {
     const ts = teachers.length ? teachers : seed.teachers;
-    return { state: { ...seed, students: fillHomerooms(students, ts), teachers: ts, records: [] }, source: 'roster' };
+    return { state: { ...seed, students: fillHomerooms(students, ts), teachers: ts, records: [], purchases: [] }, source: 'roster' };
   }
   return { state: seed, source: 'demo' };
 }
@@ -51,7 +51,9 @@ async function mergeRoster(saved: HubState): Promise<HubState> {
     const f = byId.get(s.id);
     return f ? { ...s, gender: s.gender ?? f.gender, classGroup: s.classGroup ?? f.classGroup } : s;
   });
-  return { ...saved, teachers: ts, students: fillHomerooms(ss, ts) };
+  // 가상 시연 구입 신청(p1–p5, 없는 교사)은 실제 명단에서 뺀다
+  const purchases = saved.purchases.filter(p => !(/^p\d$/.test(p.id) && !ts.some(t => t.id === p.requester)));
+  return { ...saved, teachers: ts, students: fillHomerooms(ss, ts), purchases };
 }
 
 interface Hub extends HubState {
@@ -84,6 +86,8 @@ interface Hub extends HubState {
   saveGed: (g: GedExam) => void;
   setCalendar: (c: HubState['calendar'], theme?: string) => void;
   saveSyllabus: (p: SyllabusPlan) => void;
+  saveArchive: (a: Omit<ArchiveEntry, 'id' | 'savedAt'>) => void;
+  removeArchive: (id: string) => void;
   removeSyllabus: (id: string) => void;
   removeGed: (id: string) => void;
 }
@@ -194,6 +198,8 @@ export function HubProvider({ children }: { children: ReactNode }) {
     setReportTemplate: (reportTemplate) => setState(x => ({ ...x, reportTemplate })),
     updateTeacher: (id, patch) => setState(x => ({ ...x, teachers: x.teachers.map(t => (t.id === id ? { ...t, ...patch } : t)) })),
     removeTeacher: (id) => setState(x => ({ ...x, teachers: x.teachers.filter(t => t.id !== id), students: x.students.map(s => (s.homeroom === id ? { ...s, homeroom: '' } : s)) })),
+    saveArchive: (a) => setState(x => ({ ...x, archives: [...x.archives, { ...a, id: uid('ar'), savedAt: new Date().toISOString() }] })),
+    removeArchive: (id) => setState(x => ({ ...x, archives: x.archives.filter(a => a.id !== id) })),
     saveSyllabus: (p) => setState(x => ({ ...x, syllabi: upsert(x.syllabi, { ...p, updatedAt: new Date().toISOString() }) })),
     removeSyllabus: (id) => setState(x => ({ ...x, syllabi: x.syllabi.filter(p => p.id !== id) })),
     setCalendar: (calendar, theme) => setState(x => ({ ...x, calendar, ...(theme !== undefined ? { calendarTheme: theme } : {}) })),
