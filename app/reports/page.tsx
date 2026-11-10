@@ -8,6 +8,7 @@ import { filled, newReport, periodLabel, periodOf, quarterPeriods } from '@/lib/
 import { useOpenReport } from '@/components/useOpenReport';
 import type { ProgressReport, Student } from '@/lib/types';
 import { PageHead, Badge } from '@/components/ui';
+import ReportSettings from '@/components/ReportSettings';
 
 const TONE = { 작성중: 'gold', 검토완료: 'green', 발송: 'deep' } as const;
 const CLASSES = ['전체', '어니스트반', '드림반', '콜링반'];
@@ -42,6 +43,7 @@ export default function ReportsPage() {
           <button className="btn primary" onClick={createAll}>이번 쿼터 보고서 모두 만들기</button>
         </>}
       />
+      <ReportSettings />
 
       <div className="card spread" style={{ marginBottom: 14 }}>
         <div>

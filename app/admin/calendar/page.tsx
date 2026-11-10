@@ -98,10 +98,12 @@ export default function CalendarPage() {
       <LandscapePage />
       <div className="spread no-print" style={{ marginBottom: 12 }}>
         <div className="row">
-          <div className="seg">
-            {years.map(y => <button key={y} className={year === y ? 'on' : ''} onClick={() => { setYear(y); setEditId(null); }}>{y}{!dataYears.includes(y) ? ' (원본)' : ''}</button>)}
-            <button onClick={startNext} title="작년 일정을 복사해 새 학년도 시작">+ {nextYear}</button>
-          </div>
+          <label className="year-pick" title="이전 학년도 내역을 고릅니다">
+            <select value={year} onChange={e => { setYear(Number(e.target.value)); setEditId(null); }} aria-label="학년도">
+              {years.map(y => <option key={y} value={y}>{y}학년도{!dataYears.includes(y) ? ' · 지난 원본' : ''}</option>)}
+            </select>
+          </label>
+          <button className="btn sm" onClick={startNext} title="작년 일정을 복사해 새 학년도 시작">+ {nextYear}학년도</button>
           <span className="small muted">{img ? '지난 학년도 원본 (보기만)' : '줄을 누르면 고칩니다 · 빨간 글씨는 휴일·방학'} <ArtLink no={24} /> <ArtLink no={27} /></span>
         </div>
         <div className="row">

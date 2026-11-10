@@ -5,6 +5,7 @@ import { assignHomerooms, homeroomWarnings, MAX_PER_HOMEROOM } from '@/lib/homer
 import { DOMAINS, DOMAIN_CLS, ROLE_HINTS, domainOf } from '@/lib/strengths';
 import type { StaffRole, Teacher } from '@/lib/types';
 import { PageHead, ArtLink, Badge } from '@/components/ui';
+import CellInput from '@/components/CellInput';
 
 const ROLES: StaffRole[] = ['교사', '학교장', '목사', '행정'];
 const AREAS = ['교육과정(정)', '교육과정(부)', '생활교육(정)', '생활교육(부)', '행정·대외협력(정)', '행정·대외협력(부)'];
@@ -39,11 +40,11 @@ export default function StaffPage() {
               const n = count(t.id);
               return (
                 <tr key={t.id} className={t.leaving ? 'leaving' : undefined}>
-                  <td><input className="input compact" style={{ width: 90, fontWeight: 600 }} value={t.name} onChange={e => up({ name: e.target.value })} aria-label="이름" /></td>
+                  <td><CellInput className="input compact" style={{ width: 90, fontWeight: 600 }} value={t.name} onChange={e => up({ name: e.target.value })} aria-label="이름" /></td>
                   <td><select className="input compact" value={t.role || '교사'} onChange={e => up({ role: e.target.value as StaffRole })} aria-label="역할">{ROLES.map(r => <option key={r}>{r}</option>)}</select></td>
                   <td><select className="input compact" value={t.homeroomFor || ''} onChange={e => up({ homeroomFor: (e.target.value || undefined) as Teacher['homeroomFor'] })} aria-label="담임"><option value="">안 함</option><option>초등</option><option>중고등</option></select></td>
                   <td className="num">{n ? <Badge tone={n > MAX_PER_HOMEROOM ? 'red' : 'line'}>{n}명</Badge> : ''}</td>
-                  <td><input className="input compact" style={{ width: 110 }} defaultValue={t.subjects.join(', ')} onBlur={e => up({ subjects: list(e.target.value) })} placeholder="영어, 수학" aria-label="과목" /></td>
+                  <td><CellInput className="input compact" style={{ width: 110 }} defaultValue={t.subjects.join(', ')} onBlur={e => up({ subjects: list(e.target.value) })} placeholder="영어, 수학" aria-label="과목" /></td>
                   <td>
                     <select className="input compact" value="" onChange={e => e.target.value && up({ areas: t.areas.includes(e.target.value) ? t.areas : [...t.areas, e.target.value] })} aria-label="운영 영역 추가">
                       <option value="">+ 영역</option>{AREAS.map(a => <option key={a}>{a}</option>)}
@@ -52,10 +53,10 @@ export default function StaffPage() {
                   </td>
                   <td>
                     <div className="strengths">{(t.strengths || []).map(x => <span key={x} className={`st ${domainOf(x) ? DOMAIN_CLS[domainOf(x)!] : ''}`}>{x}</span>)}</div>
-                    <input className="input compact" style={{ width: 200, marginTop: 4 }} defaultValue={(t.strengths || []).join(', ')} onBlur={e => up({ strengths: list(e.target.value) })} placeholder="신념, 지휘, …" aria-label="강점" />
+                    <CellInput className="input compact" style={{ width: 200, marginTop: 4 }} defaultValue={(t.strengths || []).join(', ')} onBlur={e => up({ strengths: list(e.target.value) })} placeholder="신념, 지휘, …" aria-label="강점" />
                   </td>
                   <td><label className="check small"><input type="checkbox" checked={!!t.leaving} onChange={e => up({ leaving: e.target.checked || undefined })} /> 예정</label></td>
-                  <td><input className="input compact" style={{ width: 150 }} defaultValue={t.note || ''} onBlur={e => up({ note: e.target.value || undefined })} aria-label="비고" /></td>
+                  <td><CellInput className="input compact" style={{ width: 150 }} defaultValue={t.note || ''} onBlur={e => up({ note: e.target.value || undefined })} aria-label="비고" /></td>
                   <td><button className="btn sm warn" onClick={() => { if (confirm(`${t.name}을(를) 명단에서 뺄까요? 담임 학생은 미지정이 됩니다.`)) hub.removeTeacher(t.id); }}>삭제</button></td>
                 </tr>
               );

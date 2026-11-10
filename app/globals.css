@@ -843,3 +843,31 @@ button.grad-cell:hover { background: var(--g10); }
 .diag-table td, .diag-table th { white-space: nowrap; }
 .diag-table .score { width: 64px; text-align: center; }
 .diag-moved { border-color: var(--gold) !important; background: var(--gold10); font-weight: 700; }
+
+/* 표 칸 글 칸 (components/CellInput.tsx): 길면 줄을 바꾸고 칸 높이를 늘린다 — 잘리지 않게 */
+textarea.cell-input { display: block; width: 100%; resize: none; overflow: hidden; line-height: 1.45; field-sizing: content; white-space: pre-wrap; overflow-wrap: anywhere; }
+.paper-table textarea.cell-input, .paper-sec textarea.cell-input { min-height: 0; border: 0; border-radius: 0; background: transparent; font: inherit; padding: 4px 2px; }
+.paper-table textarea.cell-input:focus, .paper-sec textarea.cell-input:focus { outline: none; background: #f7f7f7; border: 0; }
+.paper-table.weekly textarea.cell-input { font-size: 13px; }
+.paper-table textarea.cell-input.cal-ref { font-size: 12px; }
+.paper-table textarea.cell-input.cal-ref::placeholder { color: #9aa3a6; }
+.sr-subj textarea.cell-input, textarea.cell-input.center { text-align: center; }
+.sr-inline textarea.cell-input { flex: 1; font-size: 13px; color: #111; }
+textarea.cell-input.input { min-height: 0; }
+textarea.cell-input.input.score { width: 72px; display: inline-block; }
+/* 편집 표의 칸은 줄을 바꿔도 되도록 (머리칸 제외) */
+.diag-table td, .ged-table td { white-space: normal; }
+.diag-table td:first-child { white-space: nowrap; }
+
+/* 학년도 고르기 (학사일정 등): 탭 대신 펼침 목록 */
+.year-pick select { appearance: none; border: 1px solid var(--line); border-radius: 8px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23124046'/%3E%3C/svg%3E") no-repeat right 10px center; padding: 6px 30px 6px 12px; font-weight: 700; color: var(--deep); cursor: pointer; }
+.year-pick select:focus { outline: 2px solid var(--g40); }
+
+/* 교재 */
+.book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.book-card { display: flex; gap: 12px; align-items: flex-start; }
+.book-cover { width: 64px; height: 88px; flex: none; border-radius: 4px; background: var(--g10); display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--deep); font-weight: 700; }
+.book-cover img { width: 100%; height: 100%; object-fit: cover; }
+.book-body { flex: 1; min-width: 0; }
+.book-title { display: block; margin-top: 4px; color: var(--deep); overflow-wrap: anywhere; }
+.book-links { gap: 8px; margin-top: 8px; flex-wrap: wrap; }

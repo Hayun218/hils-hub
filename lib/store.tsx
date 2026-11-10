@@ -4,9 +4,10 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type {
   HubState, Student, StudentRecord, PurchaseRequest, Teacher, RoadmapCell, ProgressReport, TimetableBlock,
-  AttendanceEntry, GradeSheet, FormRecord, RoadmapDef, ReportTemplate, GedExam, SyllabusPlan, ArchiveEntry, Submission, GradCheck, GradSettings, SchoolRecordDoc, DiagnosticExam,
+  AttendanceEntry, GradeSheet, FormRecord, RoadmapDef, ReportTemplate, GedExam, SyllabusPlan, ArchiveEntry, Submission, GradCheck, GradSettings, SchoolRecordDoc, DiagnosticExam, Textbook,
 } from './types';
 import { normalizeRecord } from './schoolRecordModel';
+import { normalizeRound } from './diagnosis';
 import { seed } from './seed';
 import { demeritsInQuarter, guidanceCount, quarterOf, stageFor } from './rules';
 import { assignHomerooms } from './homeroom';
@@ -103,6 +104,8 @@ interface Hub extends HubState {
   saveSubmission: (x: Submission) => void;
   saveSchoolRecord: (r: SchoolRecordDoc) => void;
   saveDiagnostic: (d: DiagnosticExam) => void;
+  saveTextbook: (t: Textbook) => void;
+  removeTextbook: (id: string) => void;
   removeDiagnostic: (id: string) => void;
   removeSubmission: (id: string) => void;
   setGradCheck: (sid: string, key: string, c: GradCheck | null) => void;
@@ -123,6 +126,7 @@ const withDefaults = (s: Partial<HubState>): HubState => {
   if (!out.gradSettings || !('고등' in out.gradSettings)) out.gradSettings = seed.gradSettings; // 예전 한 가지 기준 → 학교급별
   else for (const t of ['초등', '중등', '고등'] as const) out.gradSettings[t] = { ...seed.gradSettings[t], ...out.gradSettings[t] };
   out.schoolRecords = (out.schoolRecords || []).map(normalizeRecord); // 예전 글 칸 → 표 행
+  out.diagnostics = (out.diagnostics || []).map(d => ({ ...d, round: normalizeRound(d.round) }));
   if (!s.diagnostics) out.diagnostics = out.students.some(x => seed.students.some(y => y.id === x.id)) ? seed.diagnostics : []; // 시연 진단평가는 가상 명단일 때만
   return out;
 };
@@ -225,6 +229,8 @@ export function HubProvider({ children }: { children: ReactNode }) {
     setReportTemplate: (reportTemplate) => setState(x => ({ ...x, reportTemplate })),
     updateTeacher: (id, patch) => setState(x => ({ ...x, teachers: x.teachers.map(t => (t.id === id ? { ...t, ...patch } : t)) })),
     removeTeacher: (id) => setState(x => ({ ...x, teachers: x.teachers.filter(t => t.id !== id), students: x.students.map(s => (s.homeroom === id ? { ...s, homeroom: '' } : s)) })),
+    saveTextbook: (t) => setState(x => ({ ...x, textbooks: upsert(x.textbooks, t) })),
+    removeTextbook: (id) => setState(x => ({ ...x, textbooks: x.textbooks.filter(v => v.id !== id) })),
     saveDiagnostic: (d) => setState(x => ({ ...x, diagnostics: upsert(x.diagnostics, d) })),
     removeDiagnostic: (id) => setState(x => ({ ...x, diagnostics: x.diagnostics.filter(v => v.id !== id) })),
     saveSchoolRecord: (r) => setState(x => ({ ...x, schoolRecords: upsert(x.schoolRecords, { ...r, updatedAt: new Date().toISOString() }) })),

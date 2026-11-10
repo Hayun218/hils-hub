@@ -77,7 +77,7 @@ function Interviews() {
             <button className="btn sm" onClick={() => { setWriting(false); setOpenId(null); }}>← 목록</button>
             {flash && <span className="callout gold small">{flash}</span>}
           </div>
-          <InterviewPaper record={openRec} studentId={sid || undefined} onSaved={(m, id) => { setFlash(m); setOpenId(id); }} />
+          <InterviewPaper record={openRec} studentId={sid || undefined} initialKind={params.get('kind') === '지도' ? '지도' : undefined} onSaved={(m, id) => { setFlash(m); setOpenId(id); }} />
         </div>
       ) : (
         <div className="card" style={{ padding: 0 }}>

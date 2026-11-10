@@ -1,6 +1,6 @@
 // 학습 진도 보고서의 국어·영어·수학 로드맵 (reference/private/2025-1학기-3월-학습진도보고서-원본.docx에서 옮김).
 // 칸 배치는 원본 표와 같다. r: 행 범위, c: 열 범위 (0부터, 끝 포함).
-// 이 파일은 처음 기본값이다. 실제로 쓰는 양식은 저장소(hub.roadmaps)에 있고 /reports/template에서 고친다.
+// 이 파일은 처음 기본값이다. 실제로 쓰는 양식은 저장소(hub.roadmaps)에 있고 /subjects/roadmap(교과 로드맵)에서 고친다.
 import type { RoadmapCell, RoadmapDef, RoadmapItem, RoadmapProgress, RoadmapState } from './types';
 
 export type Roadmap = RoadmapDef;

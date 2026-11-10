@@ -176,11 +176,31 @@ create table if not exists grade_sheets (
 );
 
 -- 검정고시 실제 응시 기록과 성적표 (모의 진단평가는 grade_sheets)
--- 진단평가 (제20조, 별표 7 제4호): 문해력·영어·수학. 학기 첫 주, 체험 입학, 학기 중간 추가(담임 허락)
+-- 교재 소개: 교과 로드맵의 교과·학년과 연결. 매년 최신판·구매 링크 확인 (/api/books)
+create table if not exists textbooks (
+  id uuid primary key default gen_random_uuid(),
+  subject text not null,
+  target text,                                  -- 학년·레벨
+  use text not null default '주교재' check (use in ('주교재', '부교재', '필독서', '검정고시', '참고')),
+  title text not null,
+  author text,
+  publisher text,
+  isbn text,
+  date text,                                    -- 쓰는 판의 발행일
+  link text,                                    -- 구매 링크
+  price text,
+  cover text,
+  note text,
+  checked_year int,
+  checked_at timestamptz,
+  newer jsonb                                   -- 더 새 판 후보 {title, author, publisher, date, isbn, link, price, cover, source}
+);
+
+-- 진단평가 (제20조, 별표 7 제4호): 문해력·영어·수학. 정기(매년 1쿼터 첫 주), 입학(입학 첫 주), 추가(학생 신청 + 담임 결정, 학기마다 1회까지)
 create table if not exists diagnostic_exams (
   id uuid primary key default gen_random_uuid(),
   subject text not null check (subject in ('문해력', '영어', '수학')),
-  round text not null check (round in ('학기 첫 주', '추가 (학기 중간)', '체험 입학')),
+  round text not null check (round in ('정기', '추가', '입학')),
   date date not null,
   title text not null,
   place text,
@@ -345,6 +365,7 @@ alter table grade_sheets enable row level security;
 alter table form_records enable row level security;
 alter table ged_exams enable row level security;
 alter table diagnostic_exams enable row level security;
+alter table textbooks enable row level security;
 alter table diagnostic_results enable row level security;
 alter table calendar_events enable row level security;
 alter table syllabus_plans enable row level security;
@@ -400,6 +421,7 @@ create policy templates_read on report_templates for select using ((select me())
 create policy templates_write on report_templates for all
   using ('admin' = any ((select me()).permissions)) with check ('admin' = any ((select me()).permissions));
 create policy ged_all on ged_exams for all using ((select me()) is not null) with check ((select me()) is not null);
+create policy textbooks_all on textbooks for all using ((select me()) is not null) with check ((select me()) is not null);
 create policy diag_exams_all on diagnostic_exams for all using ((select me()) is not null) with check ((select me()) is not null);
 create policy diag_results_all on diagnostic_results for all using ((select me()) is not null) with check ((select me()) is not null);
 create policy calendar_read on calendar_events for select using ((select me()) is not null);

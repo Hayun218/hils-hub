@@ -9,6 +9,7 @@ import { downloadBlob } from '@/lib/formDocx';
 import { EXAMPLE, EXAMPLE_STUDENT, GUIDE, LIMITS, SUBJECT_KINDS, attendanceOf, blankRecord, blankSubject, type Attendance } from '@/lib/schoolRecordModel';
 import type { HubState, SchoolRecordDoc, SchoolRecordSubject, SrActivity, SrSubjectKind, Student } from '@/lib/types';
 import { PageHead, Badge } from '@/components/ui';
+import CellInput from '@/components/CellInput';
 
 const TONE = { 작성중: 'gold', 검토: 'orange', 확정: 'green' } as const;
 
@@ -231,7 +232,7 @@ function Sheet({ d, head, att, up, ro, busy, draft, tools = {}, example = false 
           <tbody><tr>
             <td>{att.days}</td>
             {(['결석', '지각', '조퇴', '결과'] as const).flatMap(k => (['질병', '미인정', '기타'] as const).map(c => <td key={k + c}>{att.grid[k][c] || '.'}</td>))}
-            <td><input value={d.attendanceNote} onChange={e => up({ attendanceNote: e.target.value })} disabled={ro} placeholder={att.perfect ? '개근' : ''} aria-label="출결 특기사항" /></td>
+            <td><CellInput value={d.attendanceNote} onChange={e => up({ attendanceNote: e.target.value })} disabled={ro} placeholder={att.perfect ? '개근' : ''} aria-label="출결 특기사항" /></td>
           </tr></tbody>
         </table>
         {hint('attendance')}
@@ -255,9 +256,9 @@ function Sheet({ d, head, att, up, ro, busy, draft, tools = {}, example = false 
           <tbody>
             <ActRow label="자율활동" act={a.autonomy} onChange={p => setAct('autonomy', p)} limit={LIMITS.autonomy} ro={ro} busy={busy} draft={draft} section="창의적 체험활동 - 자율활동" />
             <ActRow label="동아리활동" act={a.club} onChange={p => setAct('club', p)} limit={LIMITS.club} ro={ro} busy={busy} draft={draft} section="창의적 체험활동 - 동아리활동"
-              top={<label className="sr-inline">동아리 <input value={a.club.club || ''} onChange={e => setAct('club', { club: e.target.value })} disabled={ro} placeholder="예) 독서토론반" /></label>} />
+              top={<label className="sr-inline">동아리 <CellInput value={a.club.club || ''} onChange={e => setAct('club', { club: e.target.value })} disabled={ro} placeholder="예) 독서토론반" /></label>} />
             <ActRow label="진로활동" act={a.career} onChange={p => setAct('career', p)} limit={LIMITS.career} ro={ro} busy={busy} draft={draft} section="창의적 체험활동 - 진로활동"
-              top={<label className="sr-inline">희망분야 <input value={a.career.hope || ''} onChange={e => setAct('career', { hope: e.target.value })} disabled={ro} placeholder="예) 교육학" /></label>} />
+              top={<label className="sr-inline">희망분야 <CellInput value={a.career.hope || ''} onChange={e => setAct('career', { hope: e.target.value })} disabled={ro} placeholder="예) 교육학" /></label>} />
           </tbody>
         </table>
         {hint('activities', <><b>자율활동</b><p>{EXAMPLE.activities.autonomy.text}</p><b>동아리활동</b><p>{EXAMPLE.activities.club.text}</p><b>진로활동</b> (희망분야: {EXAMPLE.activities.career.hope})<p>{EXAMPLE.activities.career.text}</p></>)}
@@ -358,7 +359,7 @@ function Rows<T extends object>({ cols, rows, onChange, ro, blank, extra }: {
             {cols.map(c => (
               <td key={c.k}>{c.area
                 ? <AutoText value={String(r[c.k] ?? '')} onChange={v => set(i, c.k, v)} ro={ro} ph={c.ph} />
-                : <input value={String(r[c.k] ?? '')} onChange={e => set(i, c.k, e.target.value)} disabled={ro} placeholder={c.ph} aria-label={c.label} />}</td>
+                : <CellInput value={String(r[c.k] ?? '')} onChange={e => set(i, c.k, e.target.value)} disabled={ro} placeholder={c.ph} aria-label={c.label} />}</td>
             ))}
             {extra && <td className="center">{extra.value(r, i)}</td>}
             {!ro && <td className="no-print center"><button className="sr-del" title="행 지우기" onClick={() => onChange(rows.filter((_, j) => j !== i))}>×</button></td>}
@@ -390,7 +391,7 @@ function SubjectBlock({ kind, d, up, ro, busy, draft, guide }: { kind: SrSubject
         <tbody>
           {idx.map(([x, i]) => (
             <tr key={i}>
-              {cols.map(([k]) => <td key={k}><input value={String(x[k] ?? '')} onChange={e => set(i, { [k]: e.target.value })} disabled={ro} aria-label={String(k)} /></td>)}
+              {cols.map(([k]) => <td key={k}><CellInput value={String(x[k] ?? '')} onChange={e => set(i, { [k]: e.target.value })} disabled={ro} aria-label={String(k)} /></td>)}
               {!ro && <td className="no-print"><button className="sr-del" title="과목 지우기" onClick={() => up({ subjects: d.subjects.filter((_, j) => j !== i) })}>×</button></td>}
             </tr>
           ))}

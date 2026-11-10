@@ -5,7 +5,6 @@ import { useHub } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { can } from '@/lib/permissions';
 import { DEFAULT_ROADMAPS, overlaps } from '@/lib/roadmaps';
-import { DEFAULT_TEMPLATE } from '@/lib/reports';
 import type { RoadmapDef, RoadmapItem } from '@/lib/types';
 import RoadmapView from '@/components/Roadmap';
 import RoadmapEditor from '@/components/RoadmapEditor';
@@ -27,7 +26,6 @@ export default function TemplatePage() {
   const [rid, setRid] = useState(hub.roadmaps[0]?.id || '');
   const [sel, setSel] = useState<string | null>(null);
   const rm = hub.roadmaps.find(x => x.id === rid) || hub.roadmaps[0];
-  const tpl = hub.reportTemplate;
 
   const saveRm = (next: RoadmapDef) => hub.setRoadmaps(hub.roadmaps.map(x => (x.id === next.id ? next : x)));
   const item = rm?.items.find(i => i.id === sel);
@@ -63,40 +61,21 @@ export default function TemplatePage() {
     const l = rm?.rowLabels.find(x => r >= x.r[0] && r <= x.r[1]);
     return l ? (l.r[1] > l.r[0] ? `${l.label} ${r - l.r[0] + 1}줄` : l.label) : `${r + 1}행`;
   };
-  const listEdit = (key: 'elemSubjects' | 'secSubjects', label: string) => (
-    <div className="field">{label}
-      <div className="chips-edit">
-        {tpl[key].map((x, i) => (
-          <span key={i} className="chip-x">{x}{editable && <button aria-label={`${x} 빼기`} onClick={() => hub.setReportTemplate({ ...tpl, [key]: tpl[key].filter((_, j) => j !== i) })}>×</button>}</span>
-        ))}
-        {editable && <input className="input" style={{ width: 130, padding: '3px 8px' }} placeholder="+ 과목 (Enter)" onKeyDown={e => {
-          const v = (e.target as HTMLInputElement).value.trim();
-          if (e.key === 'Enter' && v) { hub.setReportTemplate({ ...tpl, [key]: [...tpl[key], v] }); (e.target as HTMLInputElement).value = ''; }
-        }} />}
-      </div>
-    </div>
-  );
-
   return (
     <div className="page wide">
       <PageHead
         title="교과 로드맵"
-        desc="교과별 로드맵(커리큘럼)과 과목 평가의 기본 과목을 정합니다. 여기서 고치면 모든 학생의 학습 진도 보고서에 바로 적용되고, 학생별 진도 표시는 그대로 남습니다 (제29조 제4항)."
+        desc="교과별 커리큘럼의 뼈대(학년·레벨별로 무엇을 배우는지)를 설계합니다. 과목 운영안의 주차별 계획과 학생별 진도가 이 로드맵을 기준으로 하고, 학습 진도 보고서에도 같은 틀로 들어갑니다 (제21조, 제29조 제4항)."
         right={<>
-          {editable && <button className="btn" onClick={() => { if (confirm('로드맵과 기본 과목을 처음 양식(2025년 3월 보고서)으로 되돌릴까요?')) { hub.setRoadmaps(DEFAULT_ROADMAPS); hub.setReportTemplate(DEFAULT_TEMPLATE); setRid(DEFAULT_ROADMAPS[0].id); setSel(null); } }}>처음 양식으로</button>}
+          {editable && <button className="btn" onClick={() => { if (confirm('교과 로드맵을 처음 양식(2025년 3월 보고서의 로드맵)으로 되돌릴까요?')) { hub.setRoadmaps(DEFAULT_ROADMAPS); setRid(DEFAULT_ROADMAPS[0].id); setSel(null); } }}>처음 양식으로</button>}
           <ArchiveBar kind="roadmaps" year={SCHOOL_YEAR} label={`${SCHOOL_YEAR}학년도 교과 로드맵`} current={hub.roadmaps}
             onRestore={d => hub.setRoadmaps(d as RD[])}
             renderView={d => <div className="stack">{(d as RD[]).map(r => <RoadmapView key={r.id} rm={r} />)}</div>} />
-          <Link className="btn primary" href="/reports">보고서 목록</Link>
+          <Link className="btn" href="/subjects/plans">과목 운영안</Link>
+          <Link className="btn" href="/subjects/books">교재</Link>
         </>}
       />
       {!editable && <div className="callout gold small" style={{ marginBottom: 12 }}>양식은 관리자만 고칠 수 있습니다.</div>}
-
-      <div className="card grid g3" style={{ marginBottom: 14 }}>
-        <label className="field">보고서 제목<input value={tpl.title} disabled={!editable} onChange={e => hub.setReportTemplate({ ...tpl, title: e.target.value })} /></label>
-        {listEdit('elemSubjects', '과목 평가 · 초등 기본 과목')}
-        {listEdit('secSubjects', '과목 평가 · 중고등 기본 과목')}
-      </div>
 
       <div className="tabs">
         {hub.roadmaps.map(x => <button key={x.id} className={x.id === rm?.id ? 'on' : ''} onClick={() => { setRid(x.id); setSel(null); }}>{x.subject} 로드맵</button>)}

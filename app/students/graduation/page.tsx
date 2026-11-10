@@ -11,6 +11,7 @@ import { PageHead, ArtLink, Badge } from '@/components/ui';
 import ReadingLogPaper from '@/components/ReadingLogPaper';
 import { readingLogDocx } from '@/lib/readingLog';
 import { downloadBlob } from '@/lib/formDocx';
+import CellInput from '@/components/CellInput';
 
 const isPdf = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 const KINDS: SubmissionKind[] = ['독서록', '독서 보고서', '포트폴리오', '진로 탐색 보고서', '진로 계획서', '말씀·기도 노트', '프로젝트 결과물', '기타'];
@@ -165,7 +166,7 @@ function SubmitTab({ students }: { students: Student[] }) {
                     <td className="tiny">{p.file.name}{p.kind === '포트폴리오' && !isPdf(p.file) && <div style={{ color: 'var(--red)' }}>PDF만 올릴 수 있습니다</div>}</td>
                     <td><select className={`input compact${p.studentId ? '' : ' empty'}`} value={p.studentId} onChange={e => setPending(pending.map((x, j) => (j === i ? { ...x, studentId: e.target.value } : x)))} aria-label="학생"><option value="">학생 선택</option>{all.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></td>
                     <td><select className="input compact" value={p.kind} onChange={e => setPending(pending.map((x, j) => (j === i ? { ...x, kind: e.target.value as SubmissionKind } : x)))} aria-label="종류">{KINDS.map(k => <option key={k}>{k}</option>)}</select></td>
-                    <td><input className="input compact" style={{ width: '100%' }} value={p.title} onChange={e => setPending(pending.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))} aria-label="제목" /></td>
+                    <td><CellInput className="input compact" style={{ width: '100%' }} value={p.title} onChange={e => setPending(pending.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))} aria-label="제목" /></td>
                     <td><button className="btn sm" onClick={() => setPending(pending.filter((_, j) => j !== i))}>빼기</button></td>
                   </tr>
                 ))}

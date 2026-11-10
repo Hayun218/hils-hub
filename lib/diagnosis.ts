@@ -1,9 +1,13 @@
 // 진단평가 (제20조, 제25조 제2항, 별표 7 제4호): 문해력·영어·수학. 단원평가와 달리 학년 범위 전체에서 출발선과 빈 곳을 찾는다.
-// 시기: 체험 입학 1주차, 학기 첫 주(1쿼터·3쿼터 첫 주). 학기 중간(2·4쿼터 첫 주)은 학생 신청 + 담임 허락 시 추가 진단평가.
+// 시기: 입학 첫 주, 재학생은 매년 1쿼터 첫 주(정기). 그 밖에는 학생이 쿼터별 담임 정기 면담에서 신청하고
+// 담임이 시행을 정하면 추가 진단평가 — 학생 1인당 학기(6개월)마다 1회까지, 레벨 이동은 다음 쿼터 첫 주.
 import type { DiagRound, DiagSubject, DiagnosticExam, HubState } from './types';
 
 export const DIAG_SUBJECTS: DiagSubject[] = ['문해력', '영어', '수학'];
-export const DIAG_ROUNDS: DiagRound[] = ['학기 첫 주', '추가 (학기 중간)', '체험 입학'];
+export const DIAG_ROUNDS: DiagRound[] = ['정기', '추가', '입학'];
+export const ROUND_LABEL: Record<DiagRound, string> = { 정기: '정기 (매년 1쿼터 첫 주)', 추가: '추가 (학생 신청 · 담임 결정)', 입학: '입학 (입학 첫 주)' };
+/** 예전 이름 → 지금 이름 */
+export const normalizeRound = (r: string): DiagRound => (r === '학기 첫 주' ? '정기' : r.startsWith('추가') ? '추가' : r === '체험 입학' ? '입학' : (r as DiagRound));
 
 /** 별표 7 제4호 (초안)와 같은 내용. 학칙을 고치면 여기도 고친다 */
 export const DIAG_GUIDE: Record<DiagSubject, { method: string; time: string; place: string; teacher: string; result: string; sections: string[]; levels: string[] }> = {
@@ -46,7 +50,11 @@ export function lastResult(hub: HubState, sid: string, subject: DiagSubject, bef
 }
 
 export const defaultTitle = (subject: DiagSubject, round: DiagRound, date: string) =>
-  round === '체험 입학' ? `체험 입학 ${subject} 진단평가 (${date})` : `${semesterLabel(date)} ${subject} 진단평가${round === '학기 첫 주' ? '' : ' (추가)'}`;
+  round === '입학' ? `입학 ${subject} 진단평가 (${date})` : round === '정기' ? `${date.slice(0, 4)}학년도 ${subject} 진단평가` : `${semesterLabel(date)} ${subject} 추가 진단평가`;
+
+/** 추가 진단평가는 학생 1인당 학기(6개월)마다 1회까지 (제20조 제3항): 같은 학기에 이미 본 추가 진단평가 */
+export const extraThisSemester = (hub: HubState, sid: string, subject: DiagSubject, date: string, exceptId?: string) =>
+  hub.diagnostics.find(d => d.id !== exceptId && d.subject === subject && d.round === '추가' && d.students.includes(sid) && semesterLabel(d.date) === semesterLabel(date));
 
 export const newExam = (id: string, subject: DiagSubject, round: DiagRound, date: string, students: string[]): DiagnosticExam => ({
   id, subject, round, date, title: defaultTitle(subject, round, date), place: DIAG_GUIDE[subject].place, teacher: '', form: '가형',

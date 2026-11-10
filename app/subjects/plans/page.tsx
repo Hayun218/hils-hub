@@ -9,6 +9,7 @@ import { md, quarterRange, weeksOf, type Week } from '@/lib/weeks';
 import type { CalendarEvent } from '@/lib/types';
 import type { SyllabusPlan } from '@/lib/types';
 import { PageHead, ArtLink, Badge } from '@/components/ui';
+import CellInput from '@/components/CellInput';
 
 /** 학사일정으로 주차별 계획 채우기: 빈 칸만 채운다 (수업 없는 주·진단·점검·수업일이 줄어든 주) */
 function autoWeekly(cal: CalendarEvent[], weekly: SyllabusPlan['weekly']) {
@@ -117,7 +118,7 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
               <th>과목</th>
               <td><select value={SUBJECTS.includes(p.subject) ? p.subject : ''} onChange={e => up({ subject: e.target.value })} aria-label="과목">{!SUBJECTS.includes(p.subject) && <option value="">{p.subject}</option>}{SUBJECTS.map(x => <option key={x}>{x}</option>)}</select></td>
               <th>대상</th>
-              <td><input value={p.target} onChange={e => up({ target: e.target.value })} placeholder="반·레벨 (예: 콜링반, EN-B)" aria-label="대상" /></td>
+              <td><CellInput value={p.target} onChange={e => up({ target: e.target.value })} placeholder="반·레벨 (예: 콜링반, EN-B)" aria-label="대상" /></td>
             </tr>
             <tr>
               <th>학년도</th>
@@ -131,7 +132,7 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
             <h2>1. 과목 목표</h2>
             <table className="paper-table"><tbody>
               <tr><th>졸업 시점 목표</th><td>{area(p.goal, v => up({ goal: v }), '이 과목을 마친 학생은 무엇을 할 수 있는가 (별표 2 졸업 기준)', '졸업 시점 목표')}</td></tr>
-              <tr><th>졸업생 상</th><td><input value={p.profile} onChange={e => up({ profile: e.target.value })} placeholder="연결되는 졸업생 상 (별표 1)" aria-label="졸업생 상" /></td></tr>
+              <tr><th>졸업생 상</th><td><CellInput value={p.profile} onChange={e => up({ profile: e.target.value })} placeholder="연결되는 졸업생 상 (별표 1)" aria-label="졸업생 상" /></td></tr>
               <tr><th>레벨 정의</th><td>{area(p.levels, v => up({ levels: v }), '레벨별로 할 수 있는 것, 진단 도구 (별표 7)', '레벨 정의')}</td></tr>
             </tbody></table>
           </section>
@@ -140,17 +141,17 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
             <h2>2. 수업 방식과 교재</h2>
             <table className="paper-table"><tbody>
               <tr><th>수업 방식</th><td>{area(p.method, v => up({ method: v }), '자기주도·코칭·하브루타·강의 등', '수업 방식')}</td></tr>
-              <tr><th>교재</th><td><input value={p.textbooks} onChange={e => up({ textbooks: e.target.value })} aria-label="교재" /></td></tr>
-              <tr><th>필독서·독서</th><td><input value={p.readings} onChange={e => up({ readings: e.target.value })} placeholder="필독서와 활용 시점, 하브루타·발표 주제" aria-label="필독서" /></td></tr>
+              <tr><th>교재</th><td><CellInput value={p.textbooks} onChange={e => up({ textbooks: e.target.value })} aria-label="교재" /></td></tr>
+              <tr><th>필독서·독서</th><td><CellInput value={p.readings} onChange={e => up({ readings: e.target.value })} placeholder="필독서와 활용 시점, 하브루타·발표 주제" aria-label="필독서" /></td></tr>
             </tbody></table>
           </section>
 
           <section className="paper-sec">
             <h2>3. 평가 방법</h2>
             <table className="paper-table"><tbody>
-              <tr><th>쿼터 첫 주 진단</th><td><input value={p.evaluation.diagnosis} onChange={e => up({ evaluation: { ...p.evaluation, diagnosis: e.target.value } })} aria-label="진단" /></td></tr>
-              <tr><th>본 기간 형성 평가</th><td><input value={p.evaluation.formative} onChange={e => up({ evaluation: { ...p.evaluation, formative: e.target.value } })} placeholder="단원평가, 영단어 시험 등 → 성적 입력" aria-label="형성 평가" /></td></tr>
-              <tr><th>마지막 주 점검</th><td><input value={p.evaluation.final} onChange={e => up({ evaluation: { ...p.evaluation, final: e.target.value } })} placeholder="집중학습: 단원평가 / 프로젝트: 결과물 평가" aria-label="점검" /></td></tr>
+              <tr><th>쿼터 첫 주 진단</th><td><CellInput value={p.evaluation.diagnosis} onChange={e => up({ evaluation: { ...p.evaluation, diagnosis: e.target.value } })} aria-label="진단" /></td></tr>
+              <tr><th>본 기간 형성 평가</th><td><CellInput value={p.evaluation.formative} onChange={e => up({ evaluation: { ...p.evaluation, formative: e.target.value } })} placeholder="단원평가, 영단어 시험 등 → 성적 입력" aria-label="형성 평가" /></td></tr>
+              <tr><th>마지막 주 점검</th><td><CellInput value={p.evaluation.final} onChange={e => up({ evaluation: { ...p.evaluation, final: e.target.value } })} placeholder="집중학습: 단원평가 / 프로젝트: 결과물 평가" aria-label="점검" /></td></tr>
             </tbody></table>
           </section>
 
@@ -162,7 +163,7 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
               <button className="btn sm" style={{ marginLeft: 'auto' }} onClick={() => up({ weekly: autoWeekly(hub.calendar, p.weekly) })} title="빈 칸만 채웁니다">학사일정으로 다시 채우기</button>
             </div>
             <table className="paper-table"><tbody>
-              <tr><th>{QUARTER_LABEL[q]}</th><td>주당 <input style={{ width: 50, display: 'inline-block' }} type="number" min={0} value={p.blocks[q] ?? ''} onChange={e => up({ blocks: { ...p.blocks, [q]: Number(e.target.value) } })} aria-label="주당 블록" /> 블록 · 중점 <input style={{ width: 'calc(100% - 170px)', display: 'inline-block' }} value={p.focus[q] || ''} onChange={e => up({ focus: { ...p.focus, [q]: e.target.value } })} aria-label="중점 내용" /></td></tr>
+              <tr><th>{QUARTER_LABEL[q]}</th><td>주당 <input style={{ width: 50, display: 'inline-block' }} type="number" min={0} value={p.blocks[q] ?? ''} onChange={e => up({ blocks: { ...p.blocks, [q]: Number(e.target.value) } })} aria-label="주당 블록" /> 블록 · 중점 <CellInput style={{ width: 'calc(100% - 170px)', display: 'inline-block' }} value={p.focus[q] || ''} onChange={e => up({ focus: { ...p.focus, [q]: e.target.value } })} aria-label="중점 내용" /></td></tr>
             </tbody></table>
             <table className="paper-table weekly">
               <thead><tr><th style={{ width: 54 }}>주차</th><th style={{ width: 84 }}>기간</th><th style={{ width: 170 }}>학사일정</th><th>단원·주제</th><th>활동·과제·평가</th></tr></thead>
@@ -174,9 +175,9 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
                     <tr key={w.mon} className={w.off ? 'off' : w.role ? 'role' : undefined}>
                       <td>{w.off ? '-' : `${w.no}주`}</td>
                       <td className="small">{md(w.mon)}–{md(w.fri)}{!w.off && w.classDays < 5 && <div className="tiny muted">수업 {w.classDays}일</div>}</td>
-                      <td><input className="cal-ref" value={wk(k).note || ''} onChange={e => setWk(k, { note: e.target.value })} placeholder={ref || (w.off ? '수업 없음' : '')} title={ref ? `학사일정: ${ref}` : undefined} aria-label={`${md(w.mon)} 주 학사일정 메모`} /></td>
-                      <td><input value={wk(k).topic || (w.off ? '수업 없음' : '')} onChange={e => setWk(k, { topic: e.target.value })} aria-label={`${md(w.mon)} 주 주제`} /></td>
-                      <td><input value={wk(k).task} onChange={e => setWk(k, { task: e.target.value })} aria-label={`${md(w.mon)} 주 과제`} /></td>
+                      <td><CellInput className="cal-ref" value={wk(k).note || ''} onChange={e => setWk(k, { note: e.target.value })} placeholder={ref || (w.off ? '수업 없음' : '')} title={ref ? `학사일정: ${ref}` : undefined} aria-label={`${md(w.mon)} 주 학사일정 메모`} /></td>
+                      <td><CellInput value={wk(k).topic || (w.off ? '수업 없음' : '')} onChange={e => setWk(k, { topic: e.target.value })} aria-label={`${md(w.mon)} 주 주제`} /></td>
+                      <td><CellInput value={wk(k).task} onChange={e => setWk(k, { task: e.target.value })} aria-label={`${md(w.mon)} 주 과제`} /></td>
                     </tr>
                   );
                 })}

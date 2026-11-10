@@ -10,6 +10,7 @@ import { DEMO_TODAY, won } from '@/lib/rules';
 import type { PurchaseRequest, PurchaseStatus } from '@/lib/types';
 import { downloadBlob } from '@/lib/formDocx';
 import { Badge, StatusBadge } from '@/components/ui';
+import CellInput from './CellInput';
 
 const CATEGORIES = ['학습 소모품', '교재비', '청소·생활용품', '시설·비품', '행사비', '급식·기숙', '차량·교통', '기타'];
 type Tab = '구입 신청' | '결재' | '구입 처리' | '전체 장부';
@@ -52,11 +53,11 @@ export function RequestTab({ me }: { me: string }) {
         <div className="paper-sub">신청일 {dayLabel(DEMO_TODAY)}</div>
         <table className="paper-table"><tbody>
           <tr><th>신청자</th><td><select value={f.requester} onChange={e => set({ requester: e.target.value })} aria-label="신청자"><option value="">선택</option>{hub.teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></td></tr>
-          <tr><th>신청 물품</th><td><input value={f.item} onChange={e => set({ item: e.target.value })} placeholder="예: 빨간 볼펜 1.0" aria-label="신청 물품" /></td></tr>
-          <tr><th>수량</th><td><input value={f.quantity} onChange={e => set({ quantity: e.target.value })} placeholder="예: 3set (1 set = 4개)" aria-label="수량" /></td></tr>
+          <tr><th>신청 물품</th><td><CellInput value={f.item} onChange={e => set({ item: e.target.value })} placeholder="예: 빨간 볼펜 1.0" aria-label="신청 물품" /></td></tr>
+          <tr><th>수량</th><td><CellInput value={f.quantity} onChange={e => set({ quantity: e.target.value })} placeholder="예: 3set (1 set = 4개)" aria-label="수량" /></td></tr>
           <tr><th>예상 금액</th><td><div className="row" style={{ flexWrap: 'nowrap' }}><input inputMode="numeric" value={f.min} onChange={e => set({ min: e.target.value })} placeholder="3,000" aria-label="예상 금액 최소" /><span>–</span><input inputMode="numeric" value={f.max} onChange={e => set({ max: e.target.value })} placeholder="6,000 (한 값이면 비워 둠)" aria-label="예상 금액 최대" /><span>원</span></div></td></tr>
-          <tr><th>구입처</th><td><input value={f.vendor} onChange={e => set({ vendor: e.target.value })} placeholder="예: 다이소" aria-label="구입처" /></td></tr>
-          <tr><th>구입 목적</th><td><input value={f.reason} onChange={e => set({ reason: e.target.value })} placeholder="예: 채점" aria-label="구입 목적" /></td></tr>
+          <tr><th>구입처</th><td><CellInput value={f.vendor} onChange={e => set({ vendor: e.target.value })} placeholder="예: 다이소" aria-label="구입처" /></td></tr>
+          <tr><th>구입 목적</th><td><CellInput value={f.reason} onChange={e => set({ reason: e.target.value })} placeholder="예: 채점" aria-label="구입 목적" /></td></tr>
           <tr><th>예산 항목</th><td><select value={f.category} onChange={e => set({ category: e.target.value })} aria-label="예산 항목">{CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></td></tr>
         </tbody></table>
         <div className="paper-actions" style={{ marginTop: 6 }}>
@@ -159,7 +160,7 @@ export function BuyTab({ me }: { me: string }) {
                 <td className="small">{hub.teacherName(p.requester)}</td>
                 <td className="small">{priceText(p)}</td>
                 <td><input className="input" style={{ width: 110 }} inputMode="numeric" value={actual[p.id] || ''} onChange={e => setActual({ ...actual, [p.id]: e.target.value })} placeholder={String(p.amount)} aria-label="실제 금액" /></td>
-                <td><input className="input" style={{ width: '100%' }} value={note[p.id] || ''} onChange={e => setNote({ ...note, [p.id]: e.target.value })} aria-label="메모" /></td>
+                <td><CellInput className="input" style={{ width: '100%' }} value={note[p.id] || ''} onChange={e => setNote({ ...note, [p.id]: e.target.value })} aria-label="메모" /></td>
               </tr>
             ))}
             {list.length === 0 && <tr><td colSpan={6} className="muted" style={{ textAlign: 'center', padding: 28 }}>구입할 항목이 없습니다</td></tr>}

@@ -28,8 +28,9 @@ const MENU: Node[] = [
   },
   {
     id: 'subjects', label: '교과관리', items: [
-      { href: '/reports/template', label: '교과 로드맵' },
+      { href: '/subjects/roadmap', label: '교과 로드맵' },
       { href: '/subjects/plans', label: '과목 운영안' },
+      { href: '/subjects/books', label: '교재' },
       { href: '/admin/timetable', label: '시간표' },
       { href: '/records/diagnosis', label: '진단평가' },
       { href: '/records/grades', label: '성적 입력' },
@@ -79,7 +80,7 @@ export default function Shell({ children }: { children: ReactNode }) {
   const leaves: string[] = [];
   const collect = (ns: Node[]) => ns.forEach(n => (isGroup(n) ? collect(n.items) : leaves.push(n.href)));
   collect(MENU);
-  // 가장 길게 맞는 메뉴 하나만 켠다 (/reports/template는 교과 로드맵만)
+  // 가장 길게 맞는 메뉴 하나만 켠다 (하위 경로가 겹치면 더 긴 쪽)
   const best = leaves.filter(h => (h === '/' ? path === '/' : path === h || path.startsWith(h + '/'))).sort((a, b) => b.length - a.length)[0];
   const on = (href: string) => href === best || (href === '/admin/staff' && path.startsWith('/admin/staff')) || (href === '/admin/users' && path.startsWith('/admin/users'));
   const contains = (g: Group): boolean => g.items.some(n => (isGroup(n) ? contains(n) : on(n.href)));

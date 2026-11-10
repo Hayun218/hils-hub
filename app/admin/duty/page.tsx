@@ -10,6 +10,7 @@ import { age, gradeLabel } from '@/lib/rules';
 import type { Student } from '@/lib/types';
 import { PageHead, Badge, ArtLink } from '@/components/ui';
 import PosterHeader from '@/components/PosterHeader';
+import CellInput from '@/components/CellInput';
 
 type Kind = '설거지' | '청소';
 
@@ -66,7 +67,7 @@ export default function DutyPage() {
               <tbody>
                 {zones.map((z, i) => (
                   <tr key={i}>
-                    <td><input className="input" style={{ width: 90, padding: '6px 8px' }} value={z.name} onChange={e => setZone(i, { name: e.target.value })} /></td>
+                    <td><CellInput className="input" style={{ width: 90, padding: '6px 8px' }} value={z.name} onChange={e => setZone(i, { name: e.target.value })} /></td>
                     <td className="num"><input className="input" style={{ width: 64, padding: '6px 8px' }} type="number" min={0} value={z.size} onChange={e => setZone(i, { size: Number(e.target.value) })} /></td>
                     <td><button className="btn sm" onClick={() => setZones(zones.filter((_, j) => j !== i))} disabled={zones.length <= 1}>삭제</button></td>
                   </tr>

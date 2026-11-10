@@ -22,6 +22,7 @@ function Life() {
   const [flash, setFlash] = useState('');
   const [writing, setWriting] = useState(params.get('sheet') === 'incident' && !!params.get('student'));
   const q = quarterOf(DEMO_TODAY);
+  const lastIncident = hub.records.filter(r => r.type === 'incident').at(-1); // 방금 쓴 지도 사유 (기록 순서상 마지막)
   const active = hub.students.filter(s => s.status === '재학');
   const seePrivate = can(auth.me, 'private');
   const mine = auth.me?.teacherId;
@@ -65,6 +66,9 @@ function Life() {
           <div className="paper-top no-print">
             <button className="btn sm" onClick={() => setWriting(false)}>← 목록</button>
             {flash && <span className="callout gold small">{flash}</span>}
+            {flash.includes('지도 사유를 기록했습니다') && lastIncident && (
+              <Link className="btn sm primary" href={`/records/interviews?student=${lastIncident.studentId}&kind=지도`}>이 사유로 지도 면담 쓰기 (별지 8) →</Link>
+            )}
           </div>
           <LifePaper sheet="생활·훈육 기록지" onSheet={() => {}} studentId={params.get('student') || undefined} onSaved={setFlash} />
         </div>

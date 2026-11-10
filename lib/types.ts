@@ -34,9 +34,31 @@ export interface Student {
 
 export type GedLevel = '초졸' | '중졸' | '고졸';
 export type GedStatus = '응시 예정' | '합격' | '불합격' | '일부 과목 합격';
+// ───────── 교재 (교과 로드맵의 교과·학년과 연결, 매년 최신판·구매 링크 확인) ─────────
+export type TextbookUse = '주교재' | '부교재' | '필독서' | '검정고시' | '참고';
+export interface BookEdition { title: string; author: string; publisher: string; date: string; isbn: string; link: string; price?: string; cover?: string; source: string }
+export interface Textbook {
+  id: string;
+  subject: string; // 교과 (교과 로드맵의 교과 이름)
+  target: string; // 대상: 학년·레벨 (예: 중1–중2, EN-B)
+  use: TextbookUse;
+  title: string; // 교재 이름 (검색어)
+  author?: string;
+  publisher?: string;
+  isbn?: string;
+  date?: string; // 지금 쓰는 판의 발행일
+  link?: string; // 구매 링크
+  price?: string;
+  cover?: string;
+  note?: string; // 활용 방법·순서
+  checkedYear?: number; // 최신판을 확인한 학년도 (매년 한 번 자동 확인)
+  checkedAt?: string;
+  newer?: BookEdition; // 더 새 판이 있으면 (교사가 확인 후 바꾼다)
+}
+
 // ───────── 진단평가 (제20조, 제25조 제2항, 별표 7 제4호) ─────────
 export type DiagSubject = '문해력' | '영어' | '수학';
-export type DiagRound = '학기 첫 주' | '추가 (학기 중간)' | '체험 입학';
+export type DiagRound = '정기' | '추가' | '입학'; // 정기: 매년 1쿼터 첫 주 · 추가: 학생 신청 + 담임 결정, 학기마다 1회까지 · 입학: 입학 첫 주
 export interface DiagResult {
   scores: Record<string, string>; // 영역 → 점수 (또는 묶음 정답 수)
   level: string; // 판정 (영어·수학 레벨, 문해력 4단계)
@@ -378,6 +400,7 @@ export interface HubState {
   forms: FormRecord[];
   gedExams: GedExam[];
   diagnostics: DiagnosticExam[]; // 진단평가 (제20조, 별표 7 제4호)
+  textbooks: Textbook[]; // 교재 소개 (교과 로드맵과 연결)
   syllabi: SyllabusPlan[];
   archives: ArchiveEntry[];
   submissions: Submission[];

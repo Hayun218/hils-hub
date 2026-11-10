@@ -25,10 +25,10 @@
 ## 현재 상태 (2차 시안)
 
 - Next.js 15 App Router + React 19, 저장소는 localStorage (`hils-hub-demo-v2`). 기획을 다듬는 동안 데이터 연동은 미루고, 나중에 Supabase로 한꺼번에 옮긴다 (`supabase/schema.sql`는 `lib/types.ts`와 맞춰 둠).
-- 메뉴(`components/Shell.tsx`): 대시보드 / 학생관리(명단, 출석, 면담 일지, 생활 기록, 학교생활기록부, 졸업 요건·과제) / 교과관리(교과 로드맵, 과목 운영안, 시간표, 진단평가, 성적 입력, 학습 진도 보고서) / 행정관리(학사일정, 당번표) / 회계(구입 신청 · 결재·구입 처리 · 회계 장부, 권한 없는 메뉴는 숨기고 하나만 남은 묶음은 바로 링크) / 학칙·서식 / 계정관리(교직원·담임, 계정 승인·권한).
+- 메뉴(`components/Shell.tsx`): 대시보드 / 학생관리(명단, 출석, 면담 일지, 생활 기록, 학교생활기록부, 졸업 요건·과제) / 교과관리(교과 로드맵, 과목 운영안, 교재, 시간표, 진단평가, 성적 입력, 학습 진도 보고서) / 행정관리(학사일정, 당번표) / 회계(구입 신청 · 결재·구입 처리 · 회계 장부, 권한 없는 메뉴는 숨기고 하나만 남은 묶음은 바로 링크) / 학칙·서식 / 계정관리(교직원·담임, 계정 승인·권한).
 - 로그인·가입 승인·권한은 목업 (`lib/auth.tsx`, `lib/permissions.ts`). 시안 단계라 개발 서버와 Vercel 배포 모두 "관리자"로 자동 진입하고 화면 위에 시안 안내 띠가 있다 (`NEXT_PUBLIC_AUTO_ADMIN=off`로 끔, Supabase Auth 때 없앤다). 초기 아이디·비밀번호는 없다. 권한은 관리자·학칙 편집만 화면에서 막고, 나머지는 Supabase RLS 때 적용.
 - 실제 명단: `reference/private/roster.csv`, `staff.csv` (git 제외)를 `/api/roster`가 읽는다. 저장된 데이터가 있으면 비어 있는 칸(성별, 교직원)만 채운다. roster.csv의 `id` 열이 학생 기록과 연결되는 번호라 줄을 지워도 바뀌지 않는다. 명단에서 지운 학생(자퇴 등)은 저장된 기록과 함께 빠진다. 시연 데이터(`lib/seed.ts`)는 가상 학생 20명, 담임 4명(초등 1 · 중고등 3, 1인 5명).
-- 학습 진도 보고서 (`/reports`, 별지 3, 쿼터마다 — 학칙 0.9.7): 로드맵 양식은 학교 공통(`hub.roadmaps`, `/reports/template` 교과 로드맵), 학생별 진도는 `hub.progress`, 성적은 `/records/grades`, 메릿·디메릿 합계는 학생 기록에서 자동. 비공개 기록(제38조)은 들어가지 않는다.
+- 학습 진도 보고서 (`/reports`, 별지 3, 쿼터마다 — 학칙 0.9.7): 로드맵 양식은 학교 공통(`hub.roadmaps`, `/subjects/roadmap` 교과 로드맵), 학생별 진도는 `hub.progress`, 성적은 `/records/grades`, 메릿·디메릿 합계는 학생 기록에서 자동. 비공개 기록(제38조)은 들어가지 않는다.
 - 별지 서식 (`/forms/[no]`): `content/forms/byeolji-N.md`를 `lib/formTemplate.ts`가 입력 템플릿으로 바꾼다. 웹 작성 기록 + Word 내려받기(`lib/formDocx.ts`, docx 패키지).
 - 시간표 (`/admin/timetable`): 학칙 기준 자동 생성 → 블록 끌기·늘리기·추가. 학칙과 다르면 `lib/timetable.ts` checkRules가 경고만 한다. 별표 5 시간은 `lib/rules.ts` CLASS_HOURS 한 곳.
 - 담임 배정: `lib/homeroom.ts` (제35조 제3항). 학교장·목사님·행정은 담임 목록에서 뺀다.
@@ -36,7 +36,9 @@
 - 기록 ZIP (`lib/archive.ts`, 문서는 `lib/archiveDocs.ts`): `학적/`(학생정보·입학서류·검정고시·졸업 지표) · `NNNN학년도/`(생기부, `교과/` 진단평가·성적표·진도 보고서, `생활/` 출석부·생활기록·면담 일지) · `졸업과제/` · `비공개_제38조/` · `원자료/`. 쿼터·날짜는 파일 이름에. 문서는 Word.
 - 학교생활기록부 (`/records/schoolrecord`): 학교가 쓰던 학교생활세부사항기록부(학교생활기록부 Ⅱ) 8개 항목 구성(`lib/schoolRecordModel.ts`), 항목별 작성 요령과 가상 학생 예시, Word(`lib/schoolRecord.ts`). 원본(블라인드)은 `reference/private/`에만.
 - 졸업·수료 지표 (`/students/graduation`, `lib/graduation.ts`): 별표 2. 어니스트반=초등 수료, 드림반=중등 수료, 콜링반=고등 졸업. 학기 말(6·12월) 점검(제16조 제5항). 3P 바인더 등 매일 일과는 지표가 아니라 상시 기준(제16조 제6항). 독서록 양식(`components/ReadingLogPaper.tsx`), 포트폴리오는 PDF만.
-- 진단평가 (`/records/diagnosis`, `lib/diagnosis.ts`): 문해력·영어·수학, 학기 첫 주(1·3쿼터 첫 주) 전원 + 학기 중간은 학생 신청·담임 허락 시 추가 (제20조, 별표 7 제4호 초안). 회차별 문항지·결과 보관, 판정 레벨을 학생 레벨에 반영(레벨 이동 기록). 단원평가는 성적 입력.
+- 교과 로드맵 (`/subjects/roadmap`, 예전 `/reports/template`은 이동): 커리큘럼 설계만. 보고서 제목·과목 평가 기본 과목은 학습 진도 보고서 화면의 "보고서 설정"(`components/ReportSettings.tsx`).
+- 교재 (`/subjects/books`, `app/api/books`): 교과·학년(레벨)별 교재, 학년도가 바뀌면 한 번 최신판 자동 확인과 구매 링크. `ALADIN_TTB_KEY` 또는 `KAKAO_REST_API_KEY`가 있어야 자동 확인 (Google Books 키 없이는 한도 초과가 잦음), 없으면 서점 검색 링크.
+- 진단평가 (`/records/diagnosis`, `lib/diagnosis.ts`): 문해력·영어·수학. 정기(매년 1쿼터 첫 주, 전원) · 입학(입학 첫 주) · 추가(학생이 쿼터별 담임 정기 면담에서 신청, 담임이 시행 결정, 학기마다 1회까지, 레벨 이동은 다음 쿼터 첫 주) (제20조, 별표 7 제4호 초안). 회차별 문항지·결과 보관, 판정 레벨을 학생 레벨에 반영. 단원평가는 성적 입력.
 - 대시보드 주기별 할 일 (`components/CadenceTodos.tsx`): 매일 출석 · 쿼터 정기 면담·성적·진도 보고서 · 학기 생기부·졸업 지표 점검. 담임 계정이면 내 담임 학생만.
 - AI (`lib/ai.ts`, `app/api/ai/*`): OpenAI Responses API를 fetch로 호출 (SDK 없음). 생기부 초안·성적표 읽기·검정고시 사진 읽기. `OPENAI_API_KEY` 필요, 모델은 `OPENAI_MODEL` (기본 gpt-5). 학생 이름은 '학생'으로 바꾸고 비공개 기록은 보내지 않는다.
 - 별지 원문 1–7은 읽기 전용 파일이었다. 별지 3은 0.9.7에서 쓰기 허용 후 교체.

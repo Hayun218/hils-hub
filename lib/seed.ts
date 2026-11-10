@@ -98,17 +98,17 @@ export const purchases: PurchaseRequest[] = [
   { id: 'p5', date: '2027-03-14', item: '영어 원서 세트', amount: 310000, category: '교재비', reason: 'EN-A 필독서', requester: 't1', status: '신청' },
 ];
 
-// 시연용 진단평가: 2027학년도 1학기 첫 주 (1쿼터 첫 주). 가상 점수
+// 시연용 진단평가: 2027학년도 정기 진단평가 (1쿼터 첫 주). 가상 점수
 const diagStudents = students.filter(s => s.status === '재학');
 const pick = (s: Student, i: number) => (s.id.charCodeAt(2) + i * 7) % 20;
 const diagnostics: DiagnosticExam[] = [
   {
-    id: 'dg1', subject: '영어', round: '학기 첫 주', date: '2027-01-11', title: '2027학년도 1학기 영어 진단평가', place: '러닝센터 (말하기는 강의실)', teacher: 't1', form: '가형',
+    id: 'dg1', subject: '영어', round: '정기', date: '2027-01-11', title: '2027학년도 영어 진단평가', place: '러닝센터 (말하기는 강의실)', teacher: 't1', form: '가형',
     sections: ['어휘·문법', '읽기', '쓰기', '말하기'], files: [], students: diagStudents.map(s => s.id),
     results: Object.fromEntries(diagStudents.map(s => [s.id, { scores: { '어휘·문법': String(60 + pick(s, 1)), 읽기: String(55 + pick(s, 2)), 쓰기: String(50 + pick(s, 3)), 말하기: String(55 + pick(s, 4)) }, level: s.enLevel || 'EN-E', applied: true }])),
   },
   {
-    id: 'dg2', subject: '수학', round: '학기 첫 주', date: '2027-01-12', title: '2027학년도 1학기 수학 진단평가', place: '러닝센터', teacher: 't2', form: '가형',
+    id: 'dg2', subject: '수학', round: '정기', date: '2027-01-12', title: '2027학년도 수학 진단평가', place: '러닝센터', teacher: 't2', form: '가형',
     sections: ['초등 묶음', '중학 묶음', '고1 묶음'], files: [], students: diagStudents.map(s => s.id),
     results: Object.fromEntries(diagStudents.map(s => {
       const lv = s.mathLevel || '초등';
@@ -117,10 +117,10 @@ const diagnostics: DiagnosticExam[] = [
     })),
   },
   {
-    id: 'dg3', subject: '문해력', round: '학기 첫 주', date: '2027-01-13', title: '2027학년도 1학기 문해력 진단평가', place: '러닝센터 (면담은 강의실)', teacher: 't3', form: '가형',
+    id: 'dg3', subject: '문해력', round: '정기', date: '2027-01-13', title: '2027학년도 문해력 진단평가', place: '러닝센터 (면담은 강의실)', teacher: 't3', form: '가형',
     sections: ['읽기 (설명문)', '읽기 (문학)', '쓰기', '독서 이력 면담'], files: [], students: diagStudents.map(s => s.id),
     results: Object.fromEntries(diagStudents.map(s => [s.id, { scores: { '읽기 (설명문)': String(5 + (pick(s, 1) % 6)) + '/10', '읽기 (문학)': String(4 + (pick(s, 2) % 7)) + '/10', 쓰기: ['상', '중', '하'][pick(s, 3) % 3], '독서 이력 면담': '완료' }, level: ['발달', '학년 수준', '학년 수준', '심화', '기초'][pick(s, 5) % 5] }])),
   },
 ];
 
-export const seed: HubState = { students, teachers, records, purchases, progress: {}, reports: [], prayers: {}, timetable: [], attendance: {}, grades: [], forms: [], gedExams: [], diagnostics, syllabi: [], archives: [], submissions: [], schoolRecords: [], gradChecks: {}, gradSettings: { 초등: { readingCount: 30, enMin: 'EN-MH', mathMin: 'M-C', volunteerHours: null }, 중등: { readingCount: 40, enMin: 'EN-B', mathMin: 'M-B', volunteerHours: 10 }, 고등: { readingCount: 50, enMin: 'EN-B', mathMin: 'M-B', volunteerHours: 30 } }, calendar: DEFAULT_CALENDAR, roadmaps: DEFAULT_ROADMAPS, reportTemplate: DEFAULT_TEMPLATE };
+export const seed: HubState = { students, teachers, records, purchases, progress: {}, reports: [], prayers: {}, timetable: [], attendance: {}, grades: [], forms: [], gedExams: [], diagnostics, textbooks: [], syllabi: [], archives: [], submissions: [], schoolRecords: [], gradChecks: {}, gradSettings: { 초등: { readingCount: 30, enMin: 'EN-MH', mathMin: 'M-C', volunteerHours: null }, 중등: { readingCount: 40, enMin: 'EN-B', mathMin: 'M-B', volunteerHours: 10 }, 고등: { readingCount: 50, enMin: 'EN-B', mathMin: 'M-B', volunteerHours: 30 } }, calendar: DEFAULT_CALENDAR, roadmaps: DEFAULT_ROADMAPS, reportTemplate: DEFAULT_TEMPLATE };

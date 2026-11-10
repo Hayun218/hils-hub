@@ -5,6 +5,7 @@ import { useHub } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { DEMO_TODAY, DEMERIT_ITEMS, MERIT_ITEMS, accumulation, demeritsInQuarter, guidanceCount, meritsInQuarter, quarterOf, stageFor } from '@/lib/rules';
 import { ArtLink } from './ui';
+import CellInput from './CellInput';
 
 export type Sheet = '상점·벌점' | '생활·훈육 기록지';
 
@@ -106,7 +107,7 @@ export default function LifePaper({ sheet, onSheet, studentId, onSaved }: { shee
               <td>{item.action || <span className="muted">-</span>}</td>
             </tr>
             {teacherRow}
-            <tr><th>메모</th><td colSpan={3}><input value={memo} onChange={e => setMemo(e.target.value)} placeholder="상황을 짧게" aria-label="메모" /></td></tr>
+            <tr><th>메모</th><td colSpan={3}><CellInput value={memo} onChange={e => setMemo(e.target.value)} placeholder="상황을 짧게" aria-label="메모" /></td></tr>
           </tbody></table>
           <table className="paper-table"><tbody>
             <tr><th>누적 결과</th><td>{s ? <>{acc.merit || '상점 없음'}{' · '}{acc.demerit || '벌점 없음'}</> : '-'} <ArtLink no={31} label="별표 8 제4호" /></td></tr>
@@ -122,7 +123,7 @@ export default function LifePaper({ sheet, onSheet, studentId, onSaved }: { shee
           <div className="paper-sub">{s ? `${s.name} · 학년도 누적 지도 ${count}건 → 이번은 ${next.label}` : '학생을 고르세요'}</div>
           <table className="paper-table"><tbody>
             {common}
-            <tr><th>장소</th><td><input value={place} onChange={e => setPlace(e.target.value)} aria-label="장소" /></td><th>관련 학생</th><td><input value={others} onChange={e => setOthers(e.target.value)} aria-label="관련 학생" /></td></tr>
+            <tr><th>장소</th><td><CellInput value={place} onChange={e => setPlace(e.target.value)} aria-label="장소" /></td><th>관련 학생</th><td><CellInput value={others} onChange={e => setOthers(e.target.value)} aria-label="관련 학생" /></td></tr>
             {teacherRow}
             <tr>
               <th>지도 사유</th>
@@ -137,7 +138,7 @@ export default function LifePaper({ sheet, onSheet, studentId, onSaved }: { shee
             <h2>사실 기록 <span className="tiny muted" style={{ fontWeight: 400 }}>판단이나 해석 없이, 보고 들은 것만</span></h2>
             <table className="paper-table"><tbody>
               <tr><th>무엇이 일어났는가</th><td><textarea className="paper-area" value={what} onChange={e => setWhat(e.target.value)} aria-label="무엇이 일어났는가" /></td></tr>
-              <tr><th>누가 보았는가</th><td><input value={who} onChange={e => setWho(e.target.value)} aria-label="누가 보았는가" /></td></tr>
+              <tr><th>누가 보았는가</th><td><CellInput value={who} onChange={e => setWho(e.target.value)} aria-label="누가 보았는가" /></td></tr>
               <tr><th>학생의 말</th><td><textarea className="paper-area" value={said} onChange={e => setSaid(e.target.value)} placeholder="가능하면 그대로" aria-label="학생의 말" /></td></tr>
             </tbody></table>
           </section>
