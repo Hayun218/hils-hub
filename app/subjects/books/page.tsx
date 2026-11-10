@@ -1,6 +1,7 @@
 'use client';
 // 교재 소개: 교과 로드맵의 교과·학년(레벨)별로 쓰는 교재. 매년(학년도가 바뀌면) 한 번 최신판을 자동으로 확인하고
 // 구매 링크를 잡는다 (/api/books: 알라딘·카카오 키가 있으면 그쪽, 없으면 서점 검색 링크).
+import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useHub } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
@@ -71,7 +72,7 @@ export default function BooksPage() {
       <PageHead
         title="교재"
         desc={<>교과 로드맵의 교과·학년(레벨)별로 쓰는 교재를 소개합니다. 학년도가 바뀌면 한 번씩 최신판을 자동으로 확인하고 구매 링크를 잡습니다. 과목 운영안의 교재 칸과 함께 씁니다 (제21조).</>}
-        right={editable ? <button className="btn primary" onClick={() => setAdding(true)}>+ 교재 추가</button> : undefined}
+        right={<><Link className="btn" href="/subjects/roadmap">← 교과 로드맵</Link>{editable && <button className="btn primary" onClick={() => setAdding(true)}>+ 교재 추가</button>}</>}
       />
       <div className="row" style={{ marginBottom: 12 }}>
         <div className="seg">{['전체', ...subjects].map(x => <button key={x} className={subject === x ? 'on' : ''} onClick={() => setSubject(x)}>{x}</button>)}</div>

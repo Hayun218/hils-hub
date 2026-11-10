@@ -144,7 +144,7 @@ create table if not exists report_templates (
   title text not null,
   elem_subjects text[] not null default '{}',
   sec_subjects text[] not null default '{}',
-  roadmaps jsonb not null default '[]'          -- [{id, subject, title, level, cols, rowLabels, rows, items}]
+  roadmaps jsonb not null default '[]'          -- [{id, subject, title, level, cols, rowLabels, rows, items, guides{초등|중등|고등: {goal, method, operation, evaluation}}}]
 );
 
 create table if not exists report_prayers (

@@ -195,6 +195,8 @@ export type RoadmapState = '진행중' | '이수완료' | '면제';
 
 /** 로드맵 양식 (학교 공통). 고치면 모든 학생 보고서에 함께 적용된다. r: 행 범위, c: 열 범위 (0부터, 끝 포함) */
 export interface RoadmapItem { id: string; label: string; r: [number, number]; c: [number, number] }
+/** 학교급 과정 안내 (교과 로드맵의 초등·중등·고등 탭): 이 과정의 목표, 학습 방법, 수업 운영, 평가 */
+export interface RoadmapGuide { goal: string; method: string; operation: string; evaluation: string }
 export interface RoadmapDef {
   id: string;
   subject: string;
@@ -204,6 +206,7 @@ export interface RoadmapDef {
   rowLabels: { label: string; r: [number, number] }[];
   rows: number;
   items: RoadmapItem[];
+  guides?: Partial<Record<'초등' | '중등' | '고등', RoadmapGuide>>; // 학교급 과정 안내
 }
 export interface ReportTemplate {
   title: string; // 보고서 제목

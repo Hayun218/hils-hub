@@ -8,6 +8,7 @@
 //   ⌘/Ctrl+Z 되돌리기, ⌘/Ctrl+Shift+Z·Ctrl+Y 다시 실행, ⌘/Ctrl+C·V 복사·붙여넣기
 import { useEffect, useRef, useState, type KeyboardEvent as RKeyboardEvent, type MouseEvent as RMouseEvent, type PointerEvent as RPointerEvent } from 'react';
 import type { RoadmapDef, RoadmapItem } from '@/lib/types';
+import { bandOf } from '@/lib/roadmaps';
 
 type Rect = { r0: number; c0: number; r1: number; c1: number };
 type Sel = { kind: 'item'; id: string } | ({ kind: 'range' } & Rect) | null;
@@ -248,7 +249,7 @@ export default function RoadmapEditor({ rm, onChange, newId }: { rm: RoadmapDef;
       <div className={`rm-grid xl-grid${drag ? ' dragging' : ''}`} style={grid}>
         <div className="rm-h xl-corner" style={{ gridRow: 1, gridColumn: 1 }} />
         {rm.cols.map((c, i) => (
-          <div key={i} className="rm-h xl-head" style={{ gridRow: 1, gridColumn: i + 2 }}
+          <div key={i} className={`rm-h xl-head band-${bandOf(c)}${i > 0 && bandOf(rm.cols[i - 1]) !== bandOf(c) ? ' band-start' : ''}`} style={{ gridRow: 1, gridColumn: i + 2 }} title={`${bandOf(c)} 과정`}
             onDoubleClick={() => setEditing({ kind: 'col', index: i })} onContextMenu={e => openMenu(e, { kind: 'col', index: i })}>
             {editing?.kind === 'col' && editing.index === i
               ? <input className="xl-input" autoFocus defaultValue={c} onBlur={e => { save({ cols: rm.cols.map((x, j) => (j === i ? e.target.value || x : x)) }); setEditing(null); }} onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') (e.target as HTMLInputElement).blur(); }} aria-label="열 이름" />

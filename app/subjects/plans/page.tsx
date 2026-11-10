@@ -141,7 +141,7 @@ function PlanSheet({ plan: p, onBack }: { plan: SyllabusPlan; onBack: () => void
             <h2>2. 수업 방식과 교재</h2>
             <table className="paper-table"><tbody>
               <tr><th>수업 방식</th><td>{area(p.method, v => up({ method: v }), '자기주도·코칭·하브루타·강의 등', '수업 방식')}</td></tr>
-              <tr><th>교재</th><td><CellInput value={p.textbooks} onChange={e => up({ textbooks: e.target.value })} aria-label="교재" /></td></tr>
+              <tr><th>교재</th><td><CellInput value={p.textbooks} onChange={e => up({ textbooks: e.target.value })} aria-label="교재" /> <Link className="tiny" href="/subjects/books">교재 목록 보기 →</Link></td></tr>
               <tr><th>필독서·독서</th><td><CellInput value={p.readings} onChange={e => up({ readings: e.target.value })} placeholder="필독서와 활용 시점, 하브루타·발표 주제" aria-label="필독서" /></td></tr>
             </tbody></table>
           </section>

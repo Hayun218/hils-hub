@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { useHub } from '@/lib/store';
 import { useAuth } from '@/lib/auth';
 import { can } from '@/lib/permissions';
-import { DEFAULT_ROADMAPS, overlaps } from '@/lib/roadmaps';
+import { DEFAULT_ROADMAPS, bandsOf, overlaps, type Band } from '@/lib/roadmaps';
 import type { RoadmapDef, RoadmapItem } from '@/lib/types';
 import RoadmapView from '@/components/Roadmap';
 import RoadmapEditor from '@/components/RoadmapEditor';
+import RoadmapBand from '@/components/RoadmapBand';
 import ArchiveBar from '@/components/ArchiveBar';
 import { SCHOOL_YEAR } from '@/lib/rules';
 import type { RoadmapDef as RD } from '@/lib/types';
@@ -25,6 +26,7 @@ export default function TemplatePage() {
   const editable = can(auth.me, 'admin');
   const [rid, setRid] = useState(hub.roadmaps[0]?.id || '');
   const [sel, setSel] = useState<string | null>(null);
+  const [view, setView] = useState<Band | '전체'>('초등'); // 학교급 탭 또는 전체 표 (편집)
   const rm = hub.roadmaps.find(x => x.id === rid) || hub.roadmaps[0];
 
   const saveRm = (next: RoadmapDef) => hub.setRoadmaps(hub.roadmaps.map(x => (x.id === next.id ? next : x)));
@@ -78,11 +80,20 @@ export default function TemplatePage() {
       {!editable && <div className="callout gold small" style={{ marginBottom: 12 }}>양식은 관리자만 고칠 수 있습니다.</div>}
 
       <div className="tabs">
-        {hub.roadmaps.map(x => <button key={x.id} className={x.id === rm?.id ? 'on' : ''} onClick={() => { setRid(x.id); setSel(null); }}>{x.subject} 로드맵</button>)}
+        {hub.roadmaps.map(x => <button key={x.id} className={x.id === rm?.id ? 'on' : ''} onClick={() => { setRid(x.id); setSel(null); if (view !== '전체' && !bandsOf(x).includes(view)) setView(bandsOf(x)[0] || '전체'); }}>{x.subject}</button>)}
         {editable && <button onClick={addRoadmap}>+ 교과 로드맵 추가</button>}
       </div>
 
       {rm && (
+        <div className="seg band-seg" style={{ margin: '10px 0 12px' }}>
+          {bandsOf(rm).map(b => <button key={b} className={`${view === b ? 'on' : ''} band-tab-${b}`} onClick={() => setView(b)}>{b}</button>)}
+          <button className={view === '전체' ? 'on' : ''} onClick={() => setView('전체')}>{editable ? '전체 표 편집' : '전체 표'}</button>
+        </div>
+      )}
+
+      {rm && view !== '전체' && bandsOf(rm).includes(view) && <RoadmapBand rm={rm} band={view} editable={editable} onChange={saveRm} />}
+
+      {rm && (view === '전체' || !bandsOf(rm).includes(view)) && (
         <div className="tpl-layout">
           <div className="card">
             <div className="grid g3" style={{ marginBottom: 12 }}>

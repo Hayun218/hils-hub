@@ -104,3 +104,36 @@ export function overlaps(rm: Roadmap): string[] {
   }
   return [...bad];
 }
+
+/** 열 이름으로 학교급: 예비초·초N → 초등, 중N → 중등, 그 밖(고N·수1·수2·선택과목 등) → 고등 */
+export type Band = '초등' | '중등' | '고등';
+export const bandOf = (col: string): Band => (/^(예비초|초)/.test(col) ? '초등' : /^중/.test(col) ? '중등' : '고등');
+/** 이어진 같은 학교급 열 묶음: [{ band, c0, c1 }] */
+export function bandSpans(cols: string[]) {
+  const out: { band: Band; c0: number; c1: number }[] = [];
+  cols.forEach((c, i) => {
+    const b = bandOf(c);
+    const last = out[out.length - 1];
+    if (last && last.band === b) last.c1 = i; else out.push({ band: b, c0: i, c1: i });
+  });
+  return out;
+}
+/** 학생의 지금 과정 (반 기준): 어니스트반 → 초등, 드림반 → 중등, 콜링반 → 고등 */
+export const bandOfStudent = (s: { classGroup?: string; schoolLevel?: string }): Band =>
+  s.classGroup === '어니스트반' || (!s.classGroup && s.schoolLevel === '초등') ? '초등' : s.classGroup === '드림반' ? '중등' : '고등';
+
+/** 한 학교급의 열만 떼어 낸 로드맵 (학교급 탭 보기용). 항목은 그 학교급 열에 걸친 부분만, 빈 영역 줄은 뺀다 */
+export function bandSlice(rm: Roadmap, band: Band): Roadmap {
+  const idx = rm.cols.map((c, i) => [c, i] as const).filter(([c]) => bandOf(c) === band).map(([, i]) => i);
+  if (!idx.length) return { ...rm, cols: [], items: [], rowLabels: [], rows: 0 };
+  const c0 = idx[0], c1 = idx[idx.length - 1];
+  const items = rm.items.filter(i => i.c[1] >= c0 && i.c[0] <= c1).map(i => ({ ...i, c: [Math.max(i.c[0], c0) - c0, Math.min(i.c[1], c1) - c0] as [number, number] }));
+  // 항목이 하나도 없는 영역(행 묶음)은 빼고 행 번호를 다시 매긴다
+  const keep = rm.rowLabels.filter(l => items.some(i => i.r[1] >= l.r[0] && i.r[0] <= l.r[1]));
+  let r = 0;
+  const map = new Map<number, number>();
+  const rowLabels = keep.map(l => { const n = l.r[1] - l.r[0] + 1; for (let k = 0; k < n; k++) map.set(l.r[0] + k, r + k); const x = { label: l.label, r: [r, r + n - 1] as [number, number] }; r += n; return x; });
+  const kept = items.filter(i => map.has(i.r[0]) && map.has(i.r[1])).map(i => ({ ...i, r: [map.get(i.r[0])!, map.get(i.r[1])!] as [number, number] }));
+  return { ...rm, cols: rm.cols.slice(c0, c1 + 1), rowLabels, rows: r, items: kept };
+}
+export const bandsOf = (rm: Roadmap): Band[] => [...new Set(rm.cols.map(bandOf))];

@@ -39,7 +39,7 @@ export default function ReportSheet({ report: r, editable, onChange }: Props) {
       </table>
 
       {hub.roadmaps.filter(rm => roadmapOn(r, rm.id)).map(rm => (
-        <section key={rm.id}><h2>&lt;{rm.subject}&gt;</h2><RoadmapView rm={rm} progress={progress} onCell={onCell} /></section>
+        <section key={rm.id}><h2>&lt;{rm.subject}&gt;</h2><RoadmapView rm={rm} progress={progress} onCell={onCell} bands={false} /></section>
       ))}
       {onCell && <p className="rs-hint no-print">로드맵 칸을 누르면 현재 이수 중 → 이수 완료(오늘 날짜) → 면제 → 비움 순으로 바뀝니다. 학생 기록에 저장되어 다음 달 보고서로 이어집니다.</p>}
 
