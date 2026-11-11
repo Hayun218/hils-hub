@@ -901,3 +901,99 @@ textarea.cell-input.band-guide-text:focus { outline: 2px solid var(--g40); }
 .band-books { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
 .band-book { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
 .book-cover.sm { width: 44px; height: 60px; font-size: 12px; }
+
+/* ───────── 모바일·태블릿 (화면 너비에 맞춰 자동 조정) ─────────
+   ≤1000px: 사이드 메뉴 → 위쪽 막대 + 왼쪽 서랍. ≤760px: 두 칸 배치는 한 칸, 표·로드맵·시간표는 옆으로 밀어 보기.
+   ≤480px: 글자·여백을 한 단계 줄인다. 인쇄 모양은 바꾸지 않는다 (@media screen 안에서만) */
+.mobile-bar, .drawer-close, .drawer-scrim { display: none; }
+
+@media screen and (max-width: 1000px) {
+  .app { display: block; }
+  .mobile-bar {
+    display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 40;
+    height: 52px; padding: 0 12px; background: var(--deep); color: #fff; box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+  }
+  .mobile-menu { width: 40px; height: 40px; border: 0; background: transparent; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; cursor: pointer; border-radius: 8px; }
+  .mobile-menu span { display: block; width: 20px; height: 2px; background: #fff; border-radius: 2px; }
+  .mobile-menu:active { background: rgba(255,255,255,0.12); }
+  .mobile-brand { display: flex; align-items: center; gap: 8px; color: #fff; }
+  .mobile-brand:hover { text-decoration: none; }
+  .mobile-brand img { width: 26px; height: 26px; }
+  .mobile-brand b { font-size: 17px; }
+  .mobile-user { margin-left: auto; font-size: 12.5px; color: var(--g40); max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side {
+    position: fixed; top: 0; left: 0; bottom: 0; height: 100dvh; width: min(300px, 86vw); z-index: 60;
+    transform: translateX(-102%); transition: transform 0.22s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+    padding-top: 14px; -webkit-overflow-scrolling: touch;
+  }
+  .drawer-open .side { transform: none; }
+  .drawer-close { display: block; position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 8px; background: rgba(255,255,255,0.1); color: #fff; font-size: 22px; line-height: 1; cursor: pointer; }
+  .drawer-scrim { display: block; position: fixed; inset: 0; z-index: 55; background: rgba(10, 30, 33, 0.45); }
+  .nav a, .nav-toggle { padding-top: 10px; padding-bottom: 10px; } /* 손가락으로 누르기 쉽게 */
+  .demo-banner { padding: 6px 14px; font-size: 12px; }
+}
+
+@media screen and (max-width: 760px) {
+  .page { padding: 16px 14px 56px; }
+  .page-head { margin-bottom: 14px; gap: 10px; }
+  .page-head h1, .dash-head h1 { font-size: 20px; }
+  .page-head p, .dash-head p { font-size: 13px; }
+  .card { padding: 14px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* 두 칸 배치(인라인 지정 포함)는 한 칸으로 */
+  .grid[style*="grid-template-columns"], .g2, .g3, .tpl-layout, .paper-layout, .duty-layout, .edit-layout, .tt-layout, .report-editor { grid-template-columns: 1fr !important; }
+  .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat .v { font-size: 22px; }
+  /* 탭·세그먼트 버튼: 줄을 넘치면 옆으로 밀어 보기 */
+  .seg { display: flex; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .seg button { white-space: nowrap; flex: none; }
+  .tabs { -webkit-overflow-scrolling: touch; }
+  /* 표: 칸은 줄이고, 넘치면 카드 안에서 옆으로 */
+  table.t th, table.t td { padding: 7px 8px; font-size: 13px; }
+  .btn { padding: 7px 12px; }
+  .row { gap: 6px; }
+  /* A4 문서(면담 일지·생활 기록지·생기부·독서록·서식)와 보고서 */
+  .paper, .re-paper, .form-doc { padding: 18px 14px !important; min-height: 0; }
+  .paper-top { flex-wrap: wrap; }
+  .paper-table th { width: 72px; padding: 6px; font-size: 12px; white-space: normal; }
+  .paper-table td { padding: 4px 6px; }
+  .paper, .re-paper, .form-doc { overflow-x: auto; }
+  .paper-title, .form-doc .form-title { font-size: 20px; letter-spacing: 0.15em; }
+  .re-list { max-height: 160px; }
+  /* 로드맵·시간표·주차표처럼 칸이 많은 표는 최소 너비를 두고 옆으로 */
+  .rm { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .rm-grid { min-width: 620px; }
+  .xl { overflow-x: auto; }
+  .xl .rm-grid { min-width: 720px; }
+  .tt-card { padding: 8px; }
+  .band-books, .book-grid { grid-template-columns: 1fr; }
+  .band-guide-grid, .cadence-grid { grid-template-columns: 1fr; }
+  .cal-cols { grid-template-columns: 1fr; }
+  .poster { padding: 12px; border-width: 4px; }
+  .poster-motto { max-width: none; }
+  .doc { padding: 16px 12px; }
+  .todo li { flex-wrap: wrap; gap: 6px; }
+  /* 입력 칸 글자 16px: iOS가 입력할 때 화면을 확대하지 않도록 */
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px !important; }
+  .rm-grid textarea, .xl-input { font-size: 13px !important; }
+}
+
+@media screen and (max-width: 480px) {
+  .page { padding: 12px 10px 48px; }
+  .g4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .card { padding: 12px; border-radius: 8px; }
+  .page-head .row, .page-head > div:last-child { width: 100%; }
+  .mobile-user { display: none; }
+}
+@media screen and (max-width: 1000px) {
+  .doc-layout > * { min-width: 0; }
+  .toc { max-width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: #fff; }
+  .toc a { overflow-wrap: anywhere; }
+}
+@media screen and (max-width: 760px) {
+  /* 항목-값 표(머리글 줄 없는 A4 서식 표): 휴대폰에서는 "항목 | 값"이 한 줄에 하나씩 */
+  .paper-table:not(:has(thead)) tr, .rs-meta tr { display: grid; grid-template-columns: 76px minmax(0, 1fr); }
+  .paper-table:not(:has(thead)) th, .paper-table:not(:has(thead)) td, .rs-meta th, .rs-meta td { display: flex; align-items: center; min-width: 0; width: auto !important; }
+  .paper-table:not(:has(thead)) td { flex-wrap: wrap; }
+  .paper-table:not(:has(thead)) td[colspan] { grid-column: span 1; }
+  .paper-table .seg { flex-wrap: wrap; }
+}

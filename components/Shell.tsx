@@ -67,6 +67,16 @@ export default function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     try { const raw = localStorage.getItem(OPEN_KEY); if (raw) setOpen(JSON.parse(raw)); } catch {}
   }, []);
+  // 모바일: 메뉴는 왼쪽에서 열리는 서랍. 다른 화면으로 가면 닫는다
+  const [drawer, setDrawer] = useState(false);
+  useEffect(() => { setDrawer(false); }, [path]);
+  useEffect(() => {
+    if (!drawer) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setDrawer(false); };
+    window.addEventListener('keydown', esc);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', esc); document.body.style.overflow = ''; };
+  }, [drawer]);
   const toggle = (id: string) => setOpen(o => {
     const next = { ...o, [id]: !o[id] };
     try { localStorage.setItem(OPEN_KEY, JSON.stringify(next)); } catch {}
@@ -122,8 +132,15 @@ export default function Shell({ children }: { children: ReactNode }) {
   });
 
   return (
-    <div className="app">
-      <aside className="side">
+    <div className={`app${drawer ? ' drawer-open' : ''}`}>
+      <header className="mobile-bar no-print">
+        <button type="button" className="mobile-menu" aria-label="메뉴 열기" aria-expanded={drawer} onClick={() => setDrawer(true)}><span /><span /><span /></button>
+        <Link href="/" className="mobile-brand"><img src="/hils-logo.png" alt="" /><b>HILS Hub</b></Link>
+        <span className="mobile-user">{auth.me.name}</span>
+      </header>
+      {drawer && <div className="drawer-scrim no-print" onClick={() => setDrawer(false)} aria-hidden />}
+      <aside className="side" aria-label="메뉴">
+        <button type="button" className="drawer-close" aria-label="메뉴 닫기" onClick={() => setDrawer(false)}>×</button>
         <Link href="/" className="brand"><img className="brand-logo" src="/hils-logo.png" alt="" /><div><b>HILS Hub</b><span>학교 운영 시스템</span></div></Link>
         <nav className="nav">{render(menu, 0)}</nav>
         <div className="side-foot">
